@@ -3,10 +3,10 @@ import { Link, useNavigate, useLocation } from "react-router-dom";
 import { AuthContext } from "../providers/AuthProvider";
 
 const Login = () => {
-    const { signIn, signInWithGoogle } = useContext(AuthContext);
+    const { signInUser, signInWithGoogle } = useContext(AuthContext);
     const navigate = useNavigate();
     const location = useLocation();
-    const from = location.state?.from?.pathname || "/";
+    const from = location.state?.from?.pathname || "/dashboard";
     const [error, setError] = useState("");
     const [loading, setLoading] = useState(false);
 
@@ -20,7 +20,7 @@ const Login = () => {
         setLoading(true);
 
         try {
-            await signIn(email, password);
+            await signInUser(email, password);
             // TODO: Generate and store JWT token here (Wait for Step 10)
             setLoading(false);
             navigate(from, { replace: true });
