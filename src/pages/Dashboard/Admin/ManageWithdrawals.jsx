@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
-import axiosSecure from "../../services/axiosSecure";
-import { Card, Button, Badge } from "../../components/ui";
+import axiosSecure from "../../../services/axiosSecure";
+import { Card, Button, Badge } from "../../../components/ui";
 import { useState } from "react";
 
 const ManageWithdrawals = () => {
