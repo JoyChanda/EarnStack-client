@@ -5,6 +5,7 @@ import { useTheme } from "../providers/ThemeProvider";
 import ThemeToggle from "../components/Shared/ThemeToggle";
 import { Button } from "../components/ui";
 import useUser from "../hooks/useUser";
+import NotificationDropdown from "../components/Dashboard/NotificationDropdown";
 
 const DashboardLayout = () => {
     const { user, logOut } = useContext(AuthContext);
@@ -111,6 +112,7 @@ const DashboardLayout = () => {
                     </div>
 
                     <div className="flex items-center gap-4">
+                        <NotificationDropdown />
                         <ThemeToggle />
                         
                         <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary-50 dark:bg-primary-900/20 text-primary-600 dark:text-primary-400 font-black text-sm">
