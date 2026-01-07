@@ -1,4 +1,5 @@
 import { useContext, useState } from "react";
+import axios from "axios";
 import { Link, useNavigate } from "react-router-dom";
 import { AuthContext } from "../providers/AuthProvider";
 import { Input, Button } from "../components/ui";
@@ -72,8 +73,19 @@ const Register = () => {
             // 2. Update Profile (Name & Photo)
             await updateUserProfile(formData.name, formData.photo);
 
-            // 3. Get JWT and Save User & Role to Database
-            await getToken({ ...user, role: formData.role.toLowerCase() });
+            // 3. Save User & Role to Database (MongoDB)
+            const userInfo = {
+                name: formData.name,
+                email: formData.email,
+                image: formData.photo,
+                role: formData.role.toLowerCase(),
+            };
+            
+            // Note: We use the base API URL directly or an axios call here
+            await axios.post(`${import.meta.env.VITE_API_URL}/users`, userInfo);
+
+            // 4. Get JWT
+            await getToken({ email: formData.email, role: formData.role.toLowerCase() });
             
             setLoading(false);
             navigate("/"); 

@@ -14,6 +14,8 @@ import Profile from "./pages/Dashboard/Profile";
 import ManageUsers from "./pages/Dashboard/ManageUsers";
 import WorkerSubmissions from "./pages/Dashboard/WorkerSubmissions";
 import AddTask from "./pages/Dashboard/Buyer/AddTask";
+import PurchaseCoin from "./pages/Dashboard/Buyer/PurchaseCoin";
+import Withdraw from "./pages/Dashboard/Worker/Withdraw";
 
 function App() {
   return (
@@ -44,10 +46,11 @@ function App() {
         {/* Placeholders for other routes */}
         <Route path="manage-tasks" element={<DashboardHome />} />
         <Route path="withdrawals" element={<DashboardHome />} />
-        <Route path="withdraw" element={<DashboardHome />} />
+        <Route path="withdraw" element={<Withdraw />} />
+
         <Route path="add-tasks" element={<AddTask />} />
         <Route path="my-tasks" element={<DashboardHome />} />
-        <Route path="payments" element={<DashboardHome />} />
+        <Route path="payments" element={<PurchaseCoin />} />
       </Route>
     </Routes>
   );

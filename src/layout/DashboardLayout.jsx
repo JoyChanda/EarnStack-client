@@ -4,16 +4,17 @@ import { AuthContext } from "../providers/AuthProvider";
 import { useTheme } from "../providers/ThemeProvider";
 import ThemeToggle from "../components/Shared/ThemeToggle";
 import { Button } from "../components/ui";
+import useUser from "../hooks/useUser";
 
 const DashboardLayout = () => {
     const { user, logOut } = useContext(AuthContext);
+    const [dbUser, isUserLoading] = useUser();
     const { theme } = useTheme();
     const [isSidebarOpen, setIsSidebarOpen] = useState(true);
     const [isProfileOpen, setIsProfileOpen] = useState(false);
     const navigate = useNavigate();
 
-    // Mock role - replace with real database role later
-    const userRole = user?.email === 'admin@earnstack.com' ? 'admin' : 'worker';
+    const userRole = dbUser?.role;
 
     const handleLogout = async () => {
         try {
@@ -41,7 +42,7 @@ const DashboardLayout = () => {
         { name: 'Buyer Home', path: '/dashboard/buyer-home', icon: '🏠' },
         { name: 'Add Tasks', path: '/dashboard/add-tasks', icon: '➕' },
         { name: 'My Tasks', path: '/dashboard/my-tasks', icon: '📂' },
-        { name: 'Payments', path: '/dashboard/payments', icon: '💹' }
+        { name: 'Purchase Coins', path: '/dashboard/payments', icon: '💰' }
     ];
 
     const links = userRole === 'admin' ? adminLinks : userRole === 'buyer' ? buyerLinks : workerLinks;
@@ -113,7 +114,11 @@ const DashboardLayout = () => {
                         <ThemeToggle />
                         
                         <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary-50 dark:bg-primary-900/20 text-primary-600 dark:text-primary-400 font-black text-sm">
-                            🪙 500
+                            {isUserLoading ? (
+                                <div className="w-8 h-4 bg-neutral-200 dark:bg-neutral-800 animate-pulse rounded" />
+                            ) : (
+                                <>🪙 {dbUser?.coin || 0}</>
+                            )}
                         </div>
 
                         {/* Profile Dropdown */}

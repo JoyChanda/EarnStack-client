@@ -1,47 +1,57 @@
-import { useState, useEffect } from "react";
-import { useParams, Link } from "react-router-dom";
+import { useState, useContext } from "react";
+import { useParams, Link, useNavigate } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
+import axios from "axios";
+import axiosSecure from "../services/axiosSecure";
+import { AuthContext } from "../providers/AuthProvider";
 import { Card, Button, Badge, Skeleton, SkeletonText, SkeletonTitle } from "../components/ui";
 
 const TaskDetails = () => {
     const { id } = useParams();
-    const [loading, setLoading] = useState(true);
-    const [task, setTask] = useState(null);
+    const { user } = useContext(AuthContext);
+    const navigate = useNavigate();
+    const [submissionLoading, setSubmissionLoading] = useState(false);
+    const [submissionText, setSubmissionText] = useState("");
 
-    useEffect(() => {
-        // Simulate fetch
-        const timer = setTimeout(() => {
-            setTask({
-                id,
-                title: "Complete Social Media Audit for TechBrand",
-                description: "This task involves reviewing the current social media presence of TechBrand across platforms like LinkedIn, Twitter, and Instagram. You will need to check for consistency in brand voice, post frequency, and engagement levels. A spreadsheet with specific metrics will be provided for data entry.",
-                instructions: [
-                    "Visit the provided LinkedIn company page.",
-                    "Download the audit template.",
-                    "Review posts from the last 30 days.",
-                    "Record engagement rates (Likes/Comments/Shares).",
-                    "Suggest 3 improvements based on the audit.",
-                    "Submit the completed spreadsheet as proof."
-                ],
-                coins: 150,
-                deadline: "Oct 30, 2023",
-                category: "Social Media",
-                creator: {
-                    name: "TechBrand Marketing",
-                    image: "https://i.pravatar.cc/150?u=tech",
-                    rating: 4.8
-                },
-                media: [
-                    "https://images.unsplash.com/photo-1460925895917-afdab827c52f?q=80&w=2426&auto=format&fit=crop",
-                    "https://images.unsplash.com/photo-1611162617474-5b21e879e113?q=80&w=2000&auto=format&fit=crop"
-                ]
-            });
-            setLoading(false);
-        }, 1200);
+    const { data: task, isLoading: isTaskLoading } = useQuery({
+        queryKey: ['task', id],
+        queryFn: async () => {
+            const res = await axios.get(`${import.meta.env.VITE_API_URL}/tasks/${id}`);
+            return res.data;
+        }
+    });
 
-        return () => clearTimeout(timer);
-    }, [id]);
+    const handleSubmitToken = async (e) => {
+        e.preventDefault();
+        if (!submissionText.trim()) return alert("Please provide submission details.");
 
-    if (loading) {
+        setSubmissionLoading(true);
+        try {
+            const submissionData = {
+                task_id: task._id,
+                task_title: task.task_title,
+                payable_amount: task.payable_amount,
+                worker_email: user?.email,
+                worker_name: user?.displayName,
+                buyer_email: task.buyer_email,
+                submission_details: submissionText,
+                status: "pending",
+            };
+
+            const res = await axiosSecure.post("/submissions", submissionData);
+            if (res.data.success) {
+                alert("Submission sent successfully! 🎉");
+                navigate("/dashboard/my-submissions");
+            }
+        } catch (error) {
+            console.error("Submission error:", error);
+            alert("Failed to submit. Please try again.");
+        } finally {
+            setSubmissionLoading(false);
+        }
+    };
+
+    if (isTaskLoading) {
         return (
             <div className="max-w-7xl mx-auto container-padding section-spacing pt-24">
                 <div className="grid lg:grid-cols-3 gap-12">
@@ -58,6 +68,8 @@ const TaskDetails = () => {
         );
     }
 
+    if (!task) return <div className="text-center py-20 font-bold text-2xl animate-pulse">Task not found</div>;
+
     return (
         <div className="max-w-7xl mx-auto container-padding section-spacing pt-24 animate-fade-in">
             {/* Breadcrumbs */}
@@ -66,7 +78,7 @@ const TaskDetails = () => {
                 <span>/</span>
                 <Link to="/tasks" className="hover:text-primary-500 transition-colors">Tasks</Link>
                 <span>/</span>
-                <span className="text-neutral-900 dark:text-white font-medium truncate max-w-xs">{task.title}</span>
+                <span className="text-neutral-900 dark:text-white font-medium truncate max-w-xs">{task.task_title}</span>
             </nav>
 
             <div className="grid lg:grid-cols-3 gap-12">
@@ -75,14 +87,7 @@ const TaskDetails = () => {
                     {/* Media Gallery */}
                     <div className="space-y-4">
                         <div className="rounded-2xl overflow-hidden border border-neutral-200 dark:border-neutral-800 shadow-xl">
-                            <img src={task.media[0]} alt={task.title} className="w-full object-cover max-h-[500px]" />
-                        </div>
-                        <div className="grid grid-cols-2 gap-4">
-                            {task.media.slice(1).map((m, i) => (
-                                <div key={i} className="rounded-xl overflow-hidden border border-neutral-200 dark:border-neutral-800 shadow-lg h-32 md:h-48">
-                                    <img src={m} alt="" className="w-full h-full object-cover" />
-                                </div>
-                            ))}
+                            <img src={task.task_image_url} alt={task.task_title} className="w-full object-cover max-h-[500px]" />
                         </div>
                     </div>
 
@@ -90,32 +95,27 @@ const TaskDetails = () => {
                     <section className="space-y-6">
                         <div className="flex flex-wrap items-center gap-4">
                             <h1 className="text-3xl md:text-4xl font-black text-neutral-900 dark:text-white leading-tight">
-                                {task.title}
+                                {task.task_title}
                             </h1>
                             <div className="bg-primary-100 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400 font-bold px-4 py-1.5 rounded-full text-sm">
-                                🪙 {task.coins} Coins
+                                🪙 {task.payable_amount} Coins
                             </div>
                         </div>
                         
                         <div className="prose dark:prose-invert max-w-none">
-                            <h3 className="text-xl font-bold">Overview</h3>
+                            <h3 className="text-xl font-bold text-neutral-900 dark:text-white">Overview</h3>
                             <p className="text-neutral-600 dark:text-neutral-400 text-lg leading-relaxed">
-                                {task.description}
+                                {task.task_detail}
                             </p>
                         </div>
 
                         <div className="space-y-4">
-                            <h3 className="text-xl font-bold">Instructions</h3>
-                            <ul className="space-y-4">
-                                {task.instructions.map((step, i) => (
-                                    <li key={i} className="flex gap-4 items-start bg-neutral-50 dark:bg-neutral-900/50 p-4 rounded-xl border border-neutral-100 dark:border-neutral-800">
-                                        <span className="w-6 h-6 bg-primary-500 text-white rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0">
-                                            {i + 1}
-                                        </span>
-                                        <span className="text-neutral-700 dark:text-neutral-300">{step}</span>
-                                    </li>
-                                ))}
-                            </ul>
+                            <h3 className="text-xl font-bold text-neutral-900 dark:text-white">Proof Requirements</h3>
+                            <div className="bg-neutral-50 dark:bg-neutral-900/50 p-6 rounded-xl border border-neutral-100 dark:border-neutral-800">
+                                <p className="text-neutral-700 dark:text-neutral-300 font-medium">
+                                    {task.submission_info}
+                                </p>
+                            </div>
                         </div>
                     </section>
                 </div>
@@ -127,59 +127,56 @@ const TaskDetails = () => {
                             <h3 className="text-lg font-bold">Project Details</h3>
                             <div className="flex justify-between items-center text-sm">
                                 <span className="text-neutral-500">Reward</span>
-                                <span className="font-bold text-primary-600">🪙 {task.coins} Coins</span>
+                                <span className="font-bold text-primary-600">🪙 {task.payable_amount} Coins</span>
                             </div>
                             <div className="flex justify-between items-center text-sm">
                                 <span className="text-neutral-500">Deadline</span>
-                                <span className="font-bold">{task.deadline}</span>
+                                <span className="font-bold">{new Date(task.completion_date).toLocaleDateString()}</span>
                             </div>
                             <div className="flex justify-between items-center text-sm">
-                                <span className="text-neutral-500">Category</span>
-                                <span className="font-bold px-2 py-0.5 bg-neutral-100 dark:bg-neutral-800 rounded">{task.category}</span>
+                                <span className="text-neutral-500">Slots Left</span>
+                                <span className="font-bold px-2 py-0.5 bg-neutral-100 dark:bg-neutral-800 rounded">{task.required_workers}</span>
                             </div>
                         </div>
 
                         <div className="space-y-4">
-                            <h3 className="text-lg font-bold">Created By</h3>
+                            <h3 className="text-lg font-bold">Posted By</h3>
                             <div className="flex items-center gap-4">
-                                <img src={task.creator.image} className="w-12 h-12 rounded-full border-2 border-primary-500" alt={task.creator.name} />
+                                <div className="w-12 h-12 rounded-full bg-primary-100 dark:bg-primary-900/30 flex items-center justify-center text-primary-600 font-black border-2 border-primary-500">
+                                    {task.buyer_name?.charAt(0)}
+                                </div>
                                 <div>
-                                    <h4 className="font-bold text-sm truncate max-w-[150px]">{task.creator.name}</h4>
-                                    <p className="text-xs text-yellow-500 font-bold">⭐ {task.creator.rating}/5.0</p>
+                                    <h4 className="font-bold text-sm truncate max-w-[150px]">{task.buyer_name}</h4>
+                                    <p className="text-xs text-neutral-500">Verified Buyer</p>
                                 </div>
                             </div>
                         </div>
 
-                        <div className="pt-4 space-y-4">
-                            <p className="text-xs text-neutral-500 text-center">
-                                * Submit proof carefully. Multiple rejections may lead to a permanent ban.
-                            </p>
-                            <Button className="w-full py-4 text-base font-bold shadow-xl">
-                                Start Task Now
-                            </Button>
-                            <Button variant="ghost" className="w-full">
-                                Report Issue
-                            </Button>
+                        {/* Submission Form for Worker */}
+                        <div className="pt-4 space-y-4 border-t border-neutral-100 dark:border-neutral-800">
+                            <h3 className="text-lg font-bold">Complete & Submit</h3>
+                            <form onSubmit={handleSubmitToken} className="space-y-4">
+                                <textarea 
+                                    className="input-base min-h-[100px] resize-none text-sm"
+                                    placeholder="Paste your submission proof here (Text, Links, etc.)"
+                                    value={submissionText}
+                                    onChange={(e) => setSubmissionText(e.target.value)}
+                                    required
+                                ></textarea>
+                                <p className="text-[10px] text-neutral-500 text-center">
+                                    * Make sure your proof matches the requirements exactly.
+                                </p>
+                                <Button 
+                                    type="submit"
+                                    className="w-full py-4 text-base font-bold shadow-xl shadow-primary-500/20"
+                                    loading={submissionLoading}
+                                    disabled={task.required_workers <= 0}
+                                >
+                                    {task.required_workers > 0 ? 'Submit Proof' : 'No More Slots'}
+                                </Button>
+                            </form>
                         </div>
                     </Card>
-
-                    {/* Related Tasks Hint */}
-                    <div className="p-6 bg-neutral-50 dark:bg-neutral-900/50 rounded-2xl border border-dashed border-neutral-200 dark:border-neutral-800">
-                        <h4 className="font-bold text-sm mb-4">You might also like</h4>
-                        <div className="space-y-4">
-                            {[1, 2].map(i => (
-                                <div key={i} className="flex gap-3 group cursor-pointer">
-                                    <div className="w-16 h-12 bg-neutral-200 dark:bg-neutral-800 rounded-lg overflow-hidden flex-shrink-0">
-                                        <img src={`https://i.pravatar.cc/100?u=${i+10}`} className="w-full h-full object-cover group-hover:scale-110 transition-transform" />
-                                    </div>
-                                    <div className="min-w-0">
-                                        <h5 className="text-xs font-bold truncate group-hover:text-primary-500 transition-colors">App engagement task {i}</h5>
-                                        <p className="text-[10px] text-primary-500 font-bold">🪙 80 Coins</p>
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                    </div>
                 </aside>
             </div>
         </div>
