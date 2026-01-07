@@ -16,6 +16,8 @@ import WorkerSubmissions from "./pages/Dashboard/WorkerSubmissions";
 import AddTask from "./pages/Dashboard/Buyer/AddTask";
 import PurchaseCoin from "./pages/Dashboard/Buyer/PurchaseCoin";
 import Withdraw from "./pages/Dashboard/Worker/Withdraw";
+import ManageWithdrawals from "./pages/Dashboard/Admin/ManageWithdrawals";
+import ManageTasks from "./pages/Dashboard/Admin/ManageTasks";
 
 function App() {
   return (
@@ -44,8 +46,8 @@ function App() {
         <Route path="my-submissions" element={<WorkerSubmissions />} />
         
         {/* Placeholders for other routes */}
-        <Route path="manage-tasks" element={<DashboardHome />} />
-        <Route path="withdrawals" element={<DashboardHome />} />
+        <Route path="manage-tasks" element={<ManageTasks />} />
+        <Route path="withdrawals" element={<ManageWithdrawals />} />
         <Route path="withdraw" element={<Withdraw />} />
 
         <Route path="add-tasks" element={<AddTask />} />
