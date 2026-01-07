@@ -1,157 +1,178 @@
-import { useContext, useState } from "react";
-import { Link, useNavigate, useLocation } from "react-router-dom";
+import { useState, useContext } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import { AuthContext } from "../providers/AuthProvider";
+import { Input, Button, Card } from "../components/ui";
+import { validateEmail, validateRequired } from "../utils/validation";
 
 const Login = () => {
     const { signInUser, googleSignIn } = useContext(AuthContext);
-    const navigate = useNavigate();
-    const location = useLocation();
-    const from = location.state?.from?.pathname || "/dashboard";
-    const [error, setError] = useState("");
+    const [formData, setFormData] = useState({ email: "", password: "" });
+    const [errors, setErrors] = useState({});
     const [loading, setLoading] = useState(false);
+    const [socialLoading, setSocialLoading] = useState(false);
+    const navigate = useNavigate();
+
+    const handleChange = (e) => {
+        const { name, value } = e.target;
+        setFormData(prev => ({ ...prev, [name]: value }));
+        if (errors[name]) setErrors(prev => ({ ...prev, [name]: null }));
+    };
 
     const handleLogin = async (e) => {
         e.preventDefault();
-        const form = e.target;
-        const email = form.email.value;
-        const password = form.password.value;
-
-        setError("");
-
-        if (!email.includes("@")) {
-            setError("Please enter a valid email");
-            return;
-        }
-
-        if (password.length < 6) {
-            setError("Password must be at least 6 characters");
+        
+        // Validation
+        const newErrors = {};
+        const emailErr = validateEmail(formData.email);
+        const passErr = validateRequired(formData.password, "Password");
+        
+        if (emailErr) newErrors.email = emailErr;
+        if (passErr) newErrors.password = passErr;
+        
+        if (Object.keys(newErrors).length > 0) {
+            setErrors(newErrors);
             return;
         }
 
         setLoading(true);
-
         try {
-            await signInUser(email, password);
-            // TODO: Generate and store JWT token here (Wait for Step 10)
-            setLoading(false);
-            navigate(from, { replace: true });
-        } catch (err) {
-            console.error(err);
-            setError("Invalid email or password. Please try again.");
+            await signInUser(formData.email, formData.password);
+            navigate("/");
+        } catch (error) {
+            setErrors({ general: "Invalid email or password. Please try again." });
+            console.error(error);
+        } finally {
             setLoading(false);
         }
     };
 
     const handleGoogleLogin = async () => {
-        setLoading(true);
-        setError("");
+        setSocialLoading(true);
         try {
             await googleSignIn();
-             // TODO: Generate and store JWT token here (Wait for Step 10)
-             // TODO: Also create user in DB if they don't exist (Social Login handling)
-            setLoading(false);
-            navigate(from, { replace: true });
-        } catch (err) {
-            console.error(err);
-            setError(err.message);
-            setLoading(false);
+            navigate("/");
+        } catch (error) {
+            console.error(error);
+        } finally {
+            setSocialLoading(false);
         }
     };
 
-    return (
-        <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-900 via-purple-900 to-violet-900 text-white p-4">
-            <div className="w-full max-w-md bg-white/10 backdrop-blur-lg rounded-2xl p-8 shadow-2xl border border-white/20">
-                <div className="text-center mb-8">
-                    <h2 className="text-3xl font-bold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
-                        Welcome Back
-                    </h2>
-                    <p className="text-gray-300 mt-2">Sign in to your account</p>
-                </div>
+    const handleDemoLogin = (role) => {
+        const demoCredentials = {
+            admin: { email: "admin@earnstack.com", pass: "Admin@123" },
+            worker: { email: "worker@earnstack.com", pass: "Worker@123" },
+            buyer: { email: "buyer@earnstack.com", pass: "Buyer@123" }
+        };
+        const creds = demoCredentials[role];
+        setFormData({ email: creds.email, password: creds.pass });
+        setErrors({});
+    };
 
-                <form onSubmit={handleLogin} className="space-y-6">
-                    {/* Email */}
-                    <div>
-                        <label className="block text-sm font-medium text-gray-300 mb-1">Email Address</label>
-                        <input
+    return (
+        <div className="min-h-screen flex items-center justify-center container-padding py-20 bg-neutral-50 dark:bg-neutral-950 transition-colors duration-300">
+            {/* Background Decorations */}
+            <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none opacity-20">
+                <div className="absolute -top-[10%] -left-[10%] w-[40%] h-[40%] bg-primary-600 blur-[120px] rounded-full" />
+                <div className="absolute top-[20%] -right-[10%] w-[40%] h-[40%] bg-secondary-600 blur-[120px] rounded-full" />
+            </div>
+
+            <div className="relative z-10 w-full max-w-md">
+                <Card variant="glass" className="p-8 md:p-10 shadow-2xl border-white/20 dark:border-neutral-800/50">
+                    <div className="text-center mb-8">
+                        <Link to="/" className="inline-flex items-center gap-2 mb-4 group">
+                            <div className="w-10 h-10 bg-gradient-to-br from-primary-600 to-secondary-600 rounded-xl flex items-center justify-center text-white shadow-lg group-hover:scale-110 transition-transform">
+                                <span className="text-xl font-black">E</span>
+                            </div>
+                            <span className="text-2xl font-bold text-neutral-900 dark:text-white">EarnStack</span>
+                        </Link>
+                        <h1 className="text-2xl font-black">Welcome Back</h1>
+                        <p className="text-neutral-500 dark:text-neutral-400 text-sm mt-1">Please enter your details to sign in</p>
+                    </div>
+
+                    <form onSubmit={handleLogin} className="space-y-6">
+                        <Input 
+                            label="Email Address"
                             type="email"
                             name="email"
-                            placeholder="john@example.com"
-                            className="w-full px-4 py-3 rounded-lg bg-gray-800/50 border border-gray-700 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition duration-200"
+                            placeholder="name@company.com"
+                            value={formData.email}
+                            onChange={handleChange}
+                            error={errors.email}
                             required
                         />
-                    </div>
 
-                    {/* Password */}
-                    <div>
-                        <label className="block text-sm font-medium text-gray-300 mb-1">Password</label>
-                        <input
-                            type="password"
-                            name="password"
-                            placeholder="••••••••"
-                            className="w-full px-4 py-3 rounded-lg bg-gray-800/50 border border-gray-700 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition duration-200"
-                            required
-                        />
-                        <div className="flex justify-end mt-1">
-                            <a href="#" className="text-xs text-purple-400 hover:text-purple-300">Forgot Password?</a>
+                        <div className="space-y-1">
+                            <div className="flex justify-between items-center px-1">
+                                <label className="label-base">Password</label>
+                                <Link to="/forgot-password" size="sm" className="text-xs font-bold text-primary-500 hover:text-primary-600 transition-colors">
+                                    Forgot Password?
+                                </Link>
+                            </div>
+                            <Input 
+                                type="password"
+                                name="password"
+                                placeholder="••••••••"
+                                value={formData.password}
+                                onChange={handleChange}
+                                error={errors.password}
+                                required
+                            />
+                        </div>
+
+                        {errors.general && (
+                            <div className="p-3 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-600 dark:text-red-400 text-sm font-medium">
+                                {errors.general}
+                            </div>
+                        )}
+
+                        <Button type="submit" className="w-full py-4 font-bold" loading={loading}>
+                            Sign In
+                        </Button>
+                    </form>
+
+                    {/* Divider */}
+                    <div className="relative my-8">
+                        <div className="absolute inset-0 flex items-center">
+                            <div className="w-full border-t border-neutral-200 dark:border-neutral-800"></div>
+                        </div>
+                        <div className="relative flex justify-center text-xs uppercase">
+                            <span className="bg-white dark:bg-neutral-900 px-2 text-neutral-500 font-bold">Or continue with</span>
                         </div>
                     </div>
 
-                    {/* Error Message */}
-                    {error && (
-                        <div className="text-red-400 text-sm text-center bg-red-900/20 py-2 rounded-lg border border-red-500/50">
-                            {error}
-                        </div>
-                    )}
-
-                    {/* Login Button */}
-                    <button
-                        type="submit"
-                        disabled={loading}
-                        className="w-full py-3.5 rounded-lg bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-500 hover:to-blue-500 text-white font-semibold shadow-lg shadow-purple-500/30 transition-all duration-300 transform hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed"
+                    {/* Social Login */}
+                    <Button 
+                        variant="outline" 
+                        onClick={handleGoogleLogin} 
+                        loading={socialLoading}
+                        className="w-full flex items-center justify-center gap-3 py-4 font-bold"
                     >
-                        {loading ? 'Signing In...' : 'Sign In'}
-                    </button>
-                </form>
+                        {!socialLoading && (
+                            <svg className="w-5 h-5" viewBox="0 0 48 48"><path fill="#FFC107" d="M43.611,20.083H42V20H24v8h11.303c-1.649,4.657-6.08,8-11.303,8c-6.627,0-12-5.373-12-12c0-6.627,5.373-12,12-12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C12.955,4,4,12.955,4,24c0,11.045,8.955,20,20,20c11.045,0,20-8.955,20-20C44,22.659,43.862,21.35,43.611,20.083z"></path><path fill="#FF3D00" d="M6.306,14.691l6.571,4.819C14.655,15.108,18.961,12,24,12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C16.318,4,9.656,8.337,6.306,14.691z"></path><path fill="#4CAF50" d="M24,44c5.166,0,9.86-1.977,13.409-5.192l-6.19-5.238C29.211,35.091,26.715,36,24,36c-5.202,0-9.619-3.317-11.283-7.946l-6.522,5.025C9.505,39.556,16.227,44,24,44z"></path><path fill="#1976D2" d="M43.611,20.083H42V20H24v8h11.303c-0.792,2.237-2.231,4.166-4.087,5.571c0.001-0.001,0.002-0.001,0.003-0.002l6.19,5.238C36.971,39.205,44,34,44,24C44,22.659,43.862,21.35,43.611,20.083z"></path></svg>
+                        )}
+                        Google Account
+                    </Button>
 
-                <div className="my-6 flex items-center">
-                    <div className="flex-grow border-t border-gray-600"></div>
-                    <span className="mx-4 text-gray-400 text-sm">OR</span>
-                    <div className="flex-grow border-t border-gray-600"></div>
-                </div>
+                    {/* Demo Login Shortcuts */}
+                    <div className="mt-8 pt-8 border-t border-neutral-100 dark:border-neutral-800">
+                        <p className="text-center text-xs font-bold text-neutral-400 uppercase tracking-widest mb-4">Quick Demo Access</p>
+                        <div className="flex flex-wrap justify-center gap-2">
+                            <button onClick={() => handleDemoLogin('admin')} className="px-3 py-1.5 rounded-full bg-neutral-100 dark:bg-neutral-800 hover:bg-primary-500 hover:text-white transition-all text-[10px] font-black uppercase">Admin</button>
+                            <button onClick={() => handleDemoLogin('worker')} className="px-3 py-1.5 rounded-full bg-neutral-100 dark:bg-neutral-800 hover:bg-primary-500 hover:text-white transition-all text-[10px] font-black uppercase">Worker</button>
+                            <button onClick={() => handleDemoLogin('buyer')} className="px-3 py-1.5 rounded-full bg-neutral-100 dark:bg-neutral-800 hover:bg-primary-500 hover:text-white transition-all text-[10px] font-black uppercase">Buyer</button>
+                        </div>
+                    </div>
 
-                {/* Google Sign In */}
-                <button
-                    onClick={handleGoogleLogin}
-                    disabled={loading}
-                    className="w-full py-3.5 rounded-lg bg-white text-gray-900 font-semibold hover:bg-gray-100 transition-all duration-300 transform hover:scale-[1.02] flex items-center justify-center gap-3 disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                    <svg className="w-5 h-5" viewBox="0 0 24 24">
-                        <path
-                            fill="#4285F4"
-                            d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
-                        />
-                        <path
-                            fill="#34A853"
-                            d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
-                        />
-                        <path
-                            fill="#FBBC05"
-                            d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.66-2.84z"
-                        />
-                        <path
-                            fill="#EA4335"
-                            d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
-                        />
-                    </svg>
-                    Sign in with Google
-                </button>
-
-                <div className="mt-8 text-center text-gray-400 text-sm">
-                    Don't have an account?{' '}
-                    <Link to="/register" className="text-purple-400 hover:text-purple-300 font-medium transition-colors">
-                        Sign up
-                    </Link>
-                </div>
+                    <div className="text-center mt-8">
+                        <p className="text-sm text-neutral-600 dark:text-neutral-400">
+                            Don't have an account?{" "}
+                            <Link to="/register" className="font-bold text-primary-500 hover:text-primary-600 transition-colors">
+                                Sign Up
+                            </Link>
+                        </p>
+                    </div>
+                </Card>
             </div>
         </div>
     );
