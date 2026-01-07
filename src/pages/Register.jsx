@@ -3,12 +3,14 @@ import { Link, useNavigate } from "react-router-dom";
 import { AuthContext } from "../providers/AuthProvider";
 import { Input, Button } from "../components/ui";
 import { validateEmail, validatePassword, validateRequired, validateURL } from "../utils/validation";
+import useAuthToken from "../hooks/useAuthToken";
 
 const Register = () => {
     const { createUser, updateUserProfile } = useContext(AuthContext);
     const navigate = useNavigate();
     const [errors, setErrors] = useState({});
     const [loading, setLoading] = useState(false);
+    const getToken = useAuthToken();
     
     // Form state
     const [formData, setFormData] = useState({
@@ -70,9 +72,9 @@ const Register = () => {
             // 2. Update Profile (Name & Photo)
             await updateUserProfile(formData.name, formData.photo);
 
-            // 3. TODO: Save User & Role to Database (MongoDB) 
-            console.log("Role selected:", formData.role);
-
+            // 3. Get JWT and Save User & Role to Database
+            await getToken({ ...user, role: formData.role.toLowerCase() });
+            
             setLoading(false);
             navigate("/"); 
         } catch (err) {

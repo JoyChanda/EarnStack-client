@@ -3,6 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { AuthContext } from "../providers/AuthProvider";
 import { Input, Button, Card } from "../components/ui";
 import { validateEmail, validateRequired } from "../utils/validation";
+import useAuthToken from "../hooks/useAuthToken";
 
 const Login = () => {
     const { signInUser, googleSignIn } = useContext(AuthContext);
@@ -11,6 +12,7 @@ const Login = () => {
     const [loading, setLoading] = useState(false);
     const [socialLoading, setSocialLoading] = useState(false);
     const navigate = useNavigate();
+    const getToken = useAuthToken();
 
     const handleChange = (e) => {
         const { name, value } = e.target;
@@ -36,7 +38,8 @@ const Login = () => {
 
         setLoading(true);
         try {
-            await signInUser(formData.email, formData.password);
+            const result = await signInUser(formData.email, formData.password);
+            await getToken(result.user);
             navigate("/");
         } catch (error) {
             setErrors({ general: "Invalid email or password. Please try again." });
@@ -49,7 +52,8 @@ const Login = () => {
     const handleGoogleLogin = async () => {
         setSocialLoading(true);
         try {
-            await googleSignIn();
+            const result = await googleSignIn();
+            await getToken(result.user);
             navigate("/");
         } catch (error) {
             console.error(error);
