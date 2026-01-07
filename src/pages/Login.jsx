@@ -17,6 +17,17 @@ const Login = () => {
         const password = form.password.value;
 
         setError("");
+
+        if (!email.includes("@")) {
+            setError("Please enter a valid email");
+            return;
+        }
+
+        if (password.length < 6) {
+            setError("Password must be at least 6 characters");
+            return;
+        }
+
         setLoading(true);
 
         try {
