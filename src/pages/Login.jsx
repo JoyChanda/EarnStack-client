@@ -3,7 +3,7 @@ import { Link, useNavigate, useLocation } from "react-router-dom";
 import { AuthContext } from "../providers/AuthProvider";
 
 const Login = () => {
-    const { signInUser, signInWithGoogle } = useContext(AuthContext);
+    const { signInUser, googleSignIn } = useContext(AuthContext);
     const navigate = useNavigate();
     const location = useLocation();
     const from = location.state?.from?.pathname || "/dashboard";
@@ -42,11 +42,11 @@ const Login = () => {
         }
     };
 
-    const handleGoogleSignIn = async () => {
+    const handleGoogleLogin = async () => {
         setLoading(true);
         setError("");
         try {
-            await signInWithGoogle();
+            await googleSignIn();
              // TODO: Generate and store JWT token here (Wait for Step 10)
              // TODO: Also create user in DB if they don't exist (Social Login handling)
             setLoading(false);
@@ -121,7 +121,7 @@ const Login = () => {
 
                 {/* Google Sign In */}
                 <button
-                    onClick={handleGoogleSignIn}
+                    onClick={handleGoogleLogin}
                     disabled={loading}
                     className="w-full py-3.5 rounded-lg bg-white text-gray-900 font-semibold hover:bg-gray-100 transition-all duration-300 transform hover:scale-[1.02] flex items-center justify-center gap-3 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
