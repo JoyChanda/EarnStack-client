@@ -62,15 +62,25 @@ const Login = () => {
         }
     };
 
-    const handleDemoLogin = (role) => {
+    const handleDemoLogin = async (role) => {
         const demoCredentials = {
-            admin: { email: "admin@earnstack.com", pass: "Admin@123" },
-            worker: { email: "worker@earnstack.com", pass: "Worker@123" },
-            buyer: { email: "buyer@earnstack.com", pass: "Buyer@123" }
+            admin: { email: "admin@earnstack.com", pass: "Admin123!" },
+            worker: { email: "worker@earnstack.com", pass: "Worker123!" },
+            buyer: { email: "buyer@earnstack.com", pass: "Buyer123!" }
         };
         const creds = demoCredentials[role];
-        setFormData({ email: creds.email, password: creds.pass });
-        setErrors({});
+        
+        setLoading(true);
+        try {
+            const result = await signInUser(creds.email, creds.pass);
+            await getToken(result.user);
+            navigate("/");
+        } catch (error) {
+            setErrors({ general: "Demo login failed. Please try again." });
+            console.error(error);
+        } finally {
+            setLoading(false);
+        }
     };
 
     return (

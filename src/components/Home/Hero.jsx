@@ -1,7 +1,10 @@
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { Navigation, Pagination, Autoplay, EffectFade } from 'swiper/modules';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '../ui';
+import { useContext, useState } from 'react';
+import { AuthContext } from '../../providers/AuthProvider';
+import useAuthToken from '../../hooks/useAuthToken';
 
 // Import Swiper styles
 import 'swiper/css';
@@ -10,6 +13,30 @@ import 'swiper/css/pagination';
 import 'swiper/css/effect-fade';
 
 const Hero = () => {
+    const { signInUser } = useContext(AuthContext);
+    const getToken = useAuthToken();
+    const navigate = useNavigate();
+    const [loading, setLoading] = useState(false);
+
+    const handleDemoLogin = async (role) => {
+        const demoCredentials = {
+            worker: { email: "worker@earnstack.com", pass: "Worker123!" },
+            buyer: { email: "buyer@earnstack.com", pass: "Buyer123!" }
+        };
+        const creds = demoCredentials[role];
+        
+        setLoading(true);
+        try {
+            const result = await signInUser(creds.email, creds.pass);
+            await getToken(result.user);
+            navigate("/");
+        } catch (error) {
+            console.error("Demo login failed:", error);
+        } finally {
+            setLoading(false);
+        }
+    };
+
     const slides = [
         {
             title: "Earn Crypto by Completing Simple Tasks",
@@ -70,13 +97,40 @@ const Hero = () => {
                                 <p className="text-lg md:text-xl text-neutral-300 max-w-2xl animate-fade-in" style={{ animationDelay: '0.2s' }}>
                                     {slide.description}
                                 </p>
-                                <div className="flex gap-4 animate-slide-up" style={{ animationDelay: '0.4s' }}>
-                                    <Link to={slide.buttonLink}>
-                                        <Button size="lg" className="shadow-2xl">{slide.buttonText}</Button>
-                                    </Link>
-                                    <Link to="/how-it-works">
-                                        <Button variant="outline" size="lg" className="border-white text-white hover:bg-white hover:text-neutral-900">Learn More</Button>
-                                    </Link>
+                                <div className="flex flex-col items-center gap-6 animate-slide-up" style={{ animationDelay: '0.4s' }}>
+                                    <div className="flex gap-4">
+                                        <Link to={slide.buttonLink}>
+                                            <Button size="lg" className="shadow-2xl">{slide.buttonText}</Button>
+                                        </Link>
+                                        <Link to="/how-it-works">
+                                            <Button variant="outline" size="lg" className="border-white text-white hover:bg-white hover:text-neutral-900">Learn More</Button>
+                                        </Link>
+                                    </div>
+                                    
+                                    {/* Demo Access Buttons */}
+                                    <div className="flex flex-col items-center gap-3">
+                                        <span className="text-[10px] font-black uppercase tracking-[0.2em] text-white/40">Quick Demo Access</span>
+                                        <div className="flex gap-2">
+                                            <Button 
+                                                variant="outline" 
+                                                size="sm" 
+                                                onClick={() => handleDemoLogin('worker')}
+                                                loading={loading}
+                                                className="bg-white/5 border-white/10 text-white/70 hover:bg-primary-600 hover:border-primary-600 hover:text-white text-xs py-1 h-auto"
+                                            >
+                                                Demo Worker
+                                            </Button>
+                                            <Button 
+                                                variant="outline" 
+                                                size="sm" 
+                                                onClick={() => handleDemoLogin('buyer')}
+                                                loading={loading}
+                                                className="bg-white/5 border-white/10 text-white/70 hover:bg-secondary-600 hover:border-secondary-600 hover:text-white text-xs py-1 h-auto"
+                                            >
+                                                Demo Buyer
+                                            </Button>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>

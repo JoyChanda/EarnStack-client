@@ -78,7 +78,7 @@ const Register = () => {
                 name: formData.name,
                 email: formData.email,
                 image: formData.photo,
-                role: formData.role.toLowerCase(),
+                role: formData.role === "TaskCreator" ? "buyer" : "worker",
             };
             
             // Note: We use the base API URL directly or an axios call here
@@ -175,7 +175,7 @@ const Register = () => {
                                 required
                             >
                                 <option value="Worker">Worker</option>
-                                <option value="TaskCreator">Task Creator</option>
+                                <option value="TaskCreator">Buyer</option>
                             </select>
                             <div className="absolute inset-y-0 right-0 flex items-center px-4 pointer-events-none text-neutral-400">
                                 <svg className="w-4 h-4 fill-current" viewBox="0 0 20 20">
