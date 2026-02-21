@@ -1,125 +1,80 @@
 import { useContext } from 'react';
+import { Link } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
 import { AuthContext } from '../../providers/AuthProvider';
 import { Card, Button } from '../../components/ui';
-import { 
-    BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, 
-    LineChart, Line, PieChart, Pie, Cell 
+import useUser from '../../hooks/useUser';
+import axiosSecure from '../../services/axiosSecure';
+import {
+    BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
+    PieChart, Pie, Cell
 } from 'recharts';
 
-const DashboardHome = () => {
-    const { user } = useContext(AuthContext);
-    
-    // Mock user role
-    const userRole = user?.email === 'admin@earnstack.com' ? 'admin' : 'worker';
+const StatCard = ({ icon, label, value, sub }) => (
+    <Card variant="hover" className="border-none bg-white dark:bg-neutral-900 shadow-sm">
+        <div className="text-3xl mb-3">{icon}</div>
+        <p className="text-neutral-500 dark:text-neutral-400 text-xs font-bold uppercase tracking-widest">{label}</p>
+        <p className="text-2xl font-black text-neutral-900 dark:text-white mt-1">{value}</p>
+        {sub && <p className="text-xs text-neutral-400 mt-1">{sub}</p>}
+    </Card>
+);
 
-    // Mock Data
-    const stats = [
-        { label: "Total Earnings", value: "🪙 1,250", icon: "💰", trend: "+12%" },
-        { label: "Tasks Completed", value: "48", icon: "✅", trend: "+5%" },
-        { label: "Active Tasks", value: "5", icon: "⚡", trend: "0%" },
-        { label: "Pending Verification", value: "12", icon: "⏳", trend: "-2%" }
-    ];
+// ─── Worker Dashboard ──────────────────────────────────────────────────────────
+const WorkerDashboard = ({ user, dbUser }) => {
+    const { data: stats, isLoading } = useQuery({
+        queryKey: ['worker-stats', user?.email],
+        queryFn: async () => {
+            const res = await axiosSecure.get(`/worker-stats/${user?.email}`);
+            return res.data;
+        },
+        enabled: !!user?.email,
+    });
 
-    const chartData = [
-        { name: 'Mon', earnings: 400, tasks: 24 },
-        { name: 'Tue', earnings: 300, tasks: 13 },
-        { name: 'Wed', earnings: 200, tasks: 90 },
-        { name: 'Thu', earnings: 278, tasks: 39 },
-        { name: 'Fri', earnings: 189, tasks: 48 },
-        { name: 'Sat', earnings: 239, tasks: 38 },
-        { name: 'Sun', earnings: 349, tasks: 43 },
-    ];
-
+    const COLORS = ['#8b5cf6', '#f59e0b', '#ef4444'];
     const pieData = [
-        { name: 'Completed', value: 400 },
-        { name: 'Pending', value: 300 },
-        { name: 'Rejected', value: 100 },
-    ];
-
-    const COLORS = ['#8b5cf6', '#3b82f6', '#ef4444'];
-
-    const recentActions = [
-        { id: 1, action: "Task Submitted", project: "Audit TechBrand", status: "Pending", date: "2 mins ago" },
-        { id: 2, action: "Payment Received", project: "Product Review", status: "Completed", date: "4 hours ago" },
-        { id: 3, action: "New Task Available", project: "AI Annotation", status: "System", date: "1 day ago" },
-        { id: 4, action: "Identity Verified", project: "Profile", status: "Completed", date: "2 days ago" }
+        { name: 'Total', value: stats?.totalSubmissions || 0 },
+        { name: 'Pending', value: stats?.pendingSubmissions || 0 },
+        { name: 'Earnings', value: stats?.totalEarnings || 0 },
     ];
 
     return (
-        <div className="space-y-8 animate-fade-in">
-            {/* Welcome Banner */}
+        <div className="space-y-8">
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-gradient-to-r from-primary-600 to-secondary-600 p-8 rounded-3xl text-white shadow-xl">
                 <div>
-                    <h1 className="text-3xl font-black mb-2">Welcome back, {user?.displayName || 'User'}! 👋</h1>
-                    <p className="text-primary-100/90 text-sm">You have 5 new tasks available and 3 pending verifications today.</p>
+                    <h1 className="text-3xl font-black mb-2">Welcome, {user?.displayName || 'Worker'}! 👋</h1>
+                    <p className="text-primary-100/90 text-sm">You have <span className="font-black">🪙 {dbUser?.coin || 0}</span> coins in your wallet.</p>
                 </div>
-                <Button className="bg-white text-primary-600 hover:bg-neutral-100 font-bold">
-                    Browse All Tasks
-                </Button>
+                <Link to="/tasks">
+                    <Button className="bg-white text-primary-600 hover:bg-neutral-100 font-bold">Browse Tasks</Button>
+                </Link>
             </div>
 
-            {/* Stats Cards */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                {stats.map((stat, i) => (
-                    <Card key={i} variant="hover" className="border-none bg-white dark:bg-neutral-900 shadow-sm">
-                        <div className="flex justify-between items-start">
-                            <div className="text-2xl p-3 bg-neutral-100 dark:bg-neutral-800 rounded-xl mb-4">{stat.icon}</div>
-                            <span className={`text-xs font-bold px-2 py-1 rounded-full ${stat.trend.startsWith('+') ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'}`}>
-                                {stat.trend}
-                            </span>
-                        </div>
-                        <h4 className="text-neutral-500 dark:text-neutral-500 text-xs font-bold uppercase tracking-widest">{stat.label}</h4>
-                        <p className="text-2xl font-black text-neutral-900 dark:text-white mt-1">{stat.value}</p>
-                    </Card>
-                ))}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+                {isLoading ? (
+                    [...Array(3)].map((_, i) => <div key={i} className="h-32 bg-neutral-200 dark:bg-neutral-800 animate-pulse rounded-2xl" />)
+                ) : (
+                    <>
+                        <StatCard icon="📤" label="Total Submissions" value={stats?.totalSubmissions ?? 0} />
+                        <StatCard icon="⏳" label="Pending Review" value={stats?.pendingSubmissions ?? 0} />
+                        <StatCard icon="🏆" label="Total Earnings" value={`🪙 ${stats?.totalEarnings ?? 0}`} />
+                    </>
+                )}
             </div>
 
-            {/* Charts Row */}
-            <div className="grid lg:grid-cols-3 gap-8">
-                {/* Bar Chart */}
-                <Card className="lg:col-span-2 p-6 bg-white dark:bg-neutral-900 border-none shadow-sm">
-                    <h3 className="text-lg font-black mb-6">Earnings vs Tasks Weekly</h3>
-                    <div className="h-80 w-full">
-                        <ResponsiveContainer width="100%" height="100%">
-                            <BarChart data={chartData}>
-                                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e7eb" opacity={0.5} />
-                                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#9ca3af' }} />
-                                <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#9ca3af' }} />
-                                <Tooltip 
-                                    contentStyle={{ backgroundColor: '#171717', border: 'none', borderRadius: '12px', color: '#fff' }}
-                                    itemStyle={{ color: '#fff' }}
-                                />
-                                <Bar dataKey="earnings" fill="#8b5cf6" radius={[4, 4, 0, 0]} />
-                                <Bar dataKey="tasks" fill="#3b82f6" radius={[4, 4, 0, 0]} />
-                            </BarChart>
-                        </ResponsiveContainer>
-                    </div>
-                </Card>
-
-                {/* Pie Chart */}
-                <Card className="p-6 bg-white dark:bg-neutral-900 border-none shadow-sm flex flex-col">
-                    <h3 className="text-lg font-black mb-6">Task Distribution</h3>
-                    <div className="h-64 w-full flex-grow">
+            <div className="grid lg:grid-cols-2 gap-8">
+                <Card className="p-6 bg-white dark:bg-neutral-900 border-none shadow-sm">
+                    <h3 className="text-lg font-black mb-6">Submission Breakdown</h3>
+                    <div className="h-64">
                         <ResponsiveContainer width="100%" height="100%">
                             <PieChart>
-                                <Pie
-                                    data={pieData}
-                                    cx="50%"
-                                    cy="50%"
-                                    innerRadius={60}
-                                    outerRadius={80}
-                                    paddingAngle={5}
-                                    dataKey="value"
-                                >
-                                    {pieData.map((entry, index) => (
-                                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                                    ))}
+                                <Pie data={pieData} cx="50%" cy="50%" innerRadius={55} outerRadius={80} paddingAngle={5} dataKey="value">
+                                    {pieData.map((_, index) => <Cell key={index} fill={COLORS[index]} />)}
                                 </Pie>
-                                <Tooltip />
+                                <Tooltip contentStyle={{ backgroundColor: '#171717', border: 'none', borderRadius: '12px', color: '#fff' }} />
                             </PieChart>
                         </ResponsiveContainer>
                     </div>
-                    <div className="flex justify-center gap-4 mt-4">
+                    <div className="flex justify-center gap-4 mt-2">
                         {pieData.map((item, i) => (
                             <div key={i} className="flex items-center gap-2">
                                 <div className="w-3 h-3 rounded-full" style={{ backgroundColor: COLORS[i] }} />
@@ -128,46 +83,216 @@ const DashboardHome = () => {
                         ))}
                     </div>
                 </Card>
-            </div>
 
-            {/* Table Section */}
-            <Card className="p-6 bg-white dark:bg-neutral-900 border-none shadow-sm">
-                <div className="flex justify-between items-center mb-6">
-                    <h3 className="text-lg font-black">Recent Activity</h3>
-                    <Button variant="ghost" size="sm">View All</Button>
-                </div>
-                <div className="overflow-x-auto">
-                    <table className="w-full text-left">
-                        <thead className="border-b border-neutral-100 dark:border-neutral-800">
-                            <tr className="text-xs font-bold text-neutral-400 uppercase tracking-widest">
-                                <th className="pb-4 px-2">Action</th>
-                                <th className="pb-4 px-2">Project</th>
-                                <th className="pb-4 px-2">Status</th>
-                                <th className="pb-4 px-2">Date</th>
-                            </tr>
-                        </thead>
-                        <tbody className="divide-y divide-neutral-100 dark:divide-neutral-800">
-                            {recentActions.map((action) => (
-                                <tr key={action.id} className="text-sm">
-                                    <td className="py-4 px-2 font-bold text-neutral-900 dark:text-white">{action.action}</td>
-                                    <td className="py-4 px-2 text-neutral-600 dark:text-neutral-400">{action.project}</td>
-                                    <td className="py-4 px-2">
-                                        <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase ${
-                                            action.status === 'Completed' ? 'bg-green-100 text-green-600' : 
-                                            action.status === 'Pending' ? 'bg-yellow-100 text-yellow-600' : 'bg-blue-100 text-blue-600'
-                                        }`}>
-                                            {action.status}
-                                        </span>
-                                    </td>
-                                    <td className="py-4 px-2 text-neutral-500">{action.date}</td>
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
-                </div>
-            </Card>
+                <Card className="p-6 bg-white dark:bg-neutral-900 border-none shadow-sm flex flex-col justify-between">
+                    <h3 className="text-lg font-black mb-4">Quick Actions</h3>
+                    <div className="space-y-3">
+                        <Link to="/tasks" className="flex items-center gap-3 p-4 rounded-xl bg-primary-50 dark:bg-primary-900/20 hover:bg-primary-100 dark:hover:bg-primary-900/40 transition-colors group">
+                            <span className="text-2xl">🔍</span>
+                            <div>
+                                <p className="font-bold text-neutral-900 dark:text-white text-sm">Find New Tasks</p>
+                                <p className="text-xs text-neutral-500">Browse available tasks to earn coins</p>
+                            </div>
+                        </Link>
+                        <Link to="/dashboard/my-submissions" className="flex items-center gap-3 p-4 rounded-xl bg-neutral-50 dark:bg-neutral-800 hover:bg-neutral-100 dark:hover:bg-neutral-700 transition-colors">
+                            <span className="text-2xl">📋</span>
+                            <div>
+                                <p className="font-bold text-neutral-900 dark:text-white text-sm">My Submissions</p>
+                                <p className="text-xs text-neutral-500">Track your submitted work</p>
+                            </div>
+                        </Link>
+                        <Link to="/dashboard/withdraw" className="flex items-center gap-3 p-4 rounded-xl bg-neutral-50 dark:bg-neutral-800 hover:bg-neutral-100 dark:hover:bg-neutral-700 transition-colors">
+                            <span className="text-2xl">💳</span>
+                            <div>
+                                <p className="font-bold text-neutral-900 dark:text-white text-sm">Withdraw Earnings</p>
+                                <p className="text-xs text-neutral-500">Convert coins to real money</p>
+                            </div>
+                        </Link>
+                    </div>
+                </Card>
+            </div>
         </div>
     );
+};
+
+// ─── Buyer Dashboard ───────────────────────────────────────────────────────────
+const BuyerDashboard = ({ user, dbUser }) => {
+    const { data: stats, isLoading } = useQuery({
+        queryKey: ['buyer-stats', user?.email],
+        queryFn: async () => {
+            const res = await axiosSecure.get(`/buyer-stats/${user?.email}`);
+            return res.data;
+        },
+        enabled: !!user?.email,
+    });
+
+    return (
+        <div className="space-y-8">
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-gradient-to-r from-secondary-600 to-primary-600 p-8 rounded-3xl text-white shadow-xl">
+                <div>
+                    <h1 className="text-3xl font-black mb-2">Welcome, {user?.displayName || 'Buyer'}! 🛒</h1>
+                    <p className="text-primary-100/90 text-sm">Balance: <span className="font-black">🪙 {dbUser?.coin || 0}</span> coins available.</p>
+                </div>
+                <Link to="/dashboard/add-tasks">
+                    <Button className="bg-white text-secondary-600 hover:bg-neutral-100 font-bold">Post New Task</Button>
+                </Link>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+                {isLoading ? (
+                    [...Array(3)].map((_, i) => <div key={i} className="h-32 bg-neutral-200 dark:bg-neutral-800 animate-pulse rounded-2xl" />)
+                ) : (
+                    <>
+                        <StatCard icon="📋" label="Total Tasks Posted" value={stats?.totalTasks ?? 0} />
+                        <StatCard icon="👷" label="Pending Workers" value={stats?.pendingTaskWorkers ?? 0} sub="Workers yet to complete tasks" />
+                        <StatCard icon="💸" label="Total Spent" value={`$${stats?.totalPayment ?? 0}`} />
+                    </>
+                )}
+            </div>
+
+            <div className="grid lg:grid-cols-2 gap-8">
+                <Card className="p-6 bg-white dark:bg-neutral-900 border-none shadow-sm flex flex-col justify-between">
+                    <h3 className="text-lg font-black mb-4">Quick Actions</h3>
+                    <div className="space-y-3">
+                        <Link to="/dashboard/add-tasks" className="flex items-center gap-3 p-4 rounded-xl bg-secondary-50 dark:bg-secondary-900/20 hover:bg-secondary-100 dark:hover:bg-secondary-900/40 transition-colors">
+                            <span className="text-2xl">➕</span>
+                            <div>
+                                <p className="font-bold text-neutral-900 dark:text-white text-sm">Post a New Task</p>
+                                <p className="text-xs text-neutral-500">Create tasks for workers to complete</p>
+                            </div>
+                        </Link>
+                        <Link to="/dashboard/my-tasks" className="flex items-center gap-3 p-4 rounded-xl bg-neutral-50 dark:bg-neutral-800 hover:bg-neutral-100 dark:hover:bg-neutral-700 transition-colors">
+                            <span className="text-2xl">📂</span>
+                            <div>
+                                <p className="font-bold text-neutral-900 dark:text-white text-sm">My Tasks & Reviews</p>
+                                <p className="text-xs text-neutral-500">Approve or reject worker submissions</p>
+                            </div>
+                        </Link>
+                        <Link to="/dashboard/payments" className="flex items-center gap-3 p-4 rounded-xl bg-neutral-50 dark:bg-neutral-800 hover:bg-neutral-100 dark:hover:bg-neutral-700 transition-colors">
+                            <span className="text-2xl">🪙</span>
+                            <div>
+                                <p className="font-bold text-neutral-900 dark:text-white text-sm">Purchase Coins</p>
+                                <p className="text-xs text-neutral-500">Refill your balance to post more tasks</p>
+                            </div>
+                        </Link>
+                    </div>
+                </Card>
+
+                <Card className="p-6 bg-white dark:bg-neutral-900 border-none shadow-sm">
+                    <h3 className="text-lg font-black mb-4">Coin Balance</h3>
+                    <div className="flex flex-col items-center justify-center h-full gap-4 py-6">
+                        <div className="w-24 h-24 bg-primary-50 dark:bg-primary-900/20 rounded-2xl flex items-center justify-center text-5xl shadow-inner">
+                            🪙
+                        </div>
+                        <p className="text-4xl font-black text-primary-600">{dbUser?.coin || 0}</p>
+                        <p className="text-sm text-neutral-500 font-medium">Coins Available</p>
+                        <Link to="/dashboard/payments">
+                            <Button size="sm" className="font-bold">Buy More Coins</Button>
+                        </Link>
+                    </div>
+                </Card>
+            </div>
+        </div>
+    );
+};
+
+// ─── Admin Dashboard ───────────────────────────────────────────────────────────
+const AdminDashboard = ({ user }) => {
+    const { data: stats, isLoading } = useQuery({
+        queryKey: ['admin-stats'],
+        queryFn: async () => {
+            const res = await axiosSecure.get('/admin-stats');
+            return res.data;
+        },
+    });
+
+    const chartData = [
+        { name: 'Workers', value: stats?.totalWorkers ?? 0 },
+        { name: 'Buyers', value: stats?.totalBuyers ?? 0 },
+        { name: 'Coins', value: stats?.totalCoins ?? 0 },
+        { name: 'Payments', value: stats?.totalPaymentsCount ?? 0 },
+    ];
+
+    return (
+        <div className="space-y-8">
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-gradient-to-r from-neutral-800 to-neutral-700 p-8 rounded-3xl text-white shadow-xl">
+                <div>
+                    <h1 className="text-3xl font-black mb-2">Admin Control Panel 🛡️</h1>
+                    <p className="text-neutral-300 text-sm">Manage the entire EarnStack platform from here.</p>
+                </div>
+                <Link to="/dashboard/manage-users">
+                    <Button className="bg-white text-neutral-900 hover:bg-neutral-100 font-bold">Manage Users</Button>
+                </Link>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                {isLoading ? (
+                    [...Array(4)].map((_, i) => <div key={i} className="h-32 bg-neutral-200 dark:bg-neutral-800 animate-pulse rounded-2xl" />)
+                ) : (
+                    <>
+                        <StatCard icon="👷" label="Total Workers" value={stats?.totalWorkers ?? 0} />
+                        <StatCard icon="🛒" label="Total Buyers" value={stats?.totalBuyers ?? 0} />
+                        <StatCard icon="🪙" label="Total Coins in System" value={stats?.totalCoins ?? 0} />
+                        <StatCard icon="💰" label="Total Revenue" value={`$${stats?.totalPaymentAmount ?? 0}`} />
+                    </>
+                )}
+            </div>
+
+            <Card className="p-6 bg-white dark:bg-neutral-900 border-none shadow-sm">
+                <h3 className="text-lg font-black mb-6">Platform Overview</h3>
+                <div className="h-72">
+                    <ResponsiveContainer width="100%" height="100%">
+                        <BarChart data={chartData}>
+                            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e7eb" opacity={0.5} />
+                            <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#9ca3af' }} />
+                            <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#9ca3af' }} />
+                            <Tooltip contentStyle={{ backgroundColor: '#171717', border: 'none', borderRadius: '12px', color: '#fff' }} />
+                            <Bar dataKey="value" fill="#8b5cf6" radius={[4, 4, 0, 0]} />
+                        </BarChart>
+                    </ResponsiveContainer>
+                </div>
+            </Card>
+
+            <div className="grid md:grid-cols-3 gap-6">
+                {[
+                    { icon: '👥', label: 'Manage Users', desc: 'View, promote, or remove users', path: '/dashboard/manage-users' },
+                    { icon: '📋', label: 'All Tasks', desc: 'Moderate platform tasks', path: '/dashboard/manage-tasks' },
+                    { icon: '💰', label: 'Withdrawals', desc: 'Approve worker withdrawals', path: '/dashboard/withdrawals' },
+                ].map((action) => (
+                    <Link key={action.path} to={action.path}>
+                        <Card variant="hover" className="p-6 border-none shadow-sm cursor-pointer">
+                            <div className="text-3xl mb-3">{action.icon}</div>
+                            <p className="font-black text-neutral-900 dark:text-white">{action.label}</p>
+                            <p className="text-xs text-neutral-500 mt-1">{action.desc}</p>
+                        </Card>
+                    </Link>
+                ))}
+            </div>
+        </div>
+    );
+};
+
+// ─── Main Component ────────────────────────────────────────────────────────────
+const DashboardHome = () => {
+    const { user } = useContext(AuthContext);
+    const [dbUser, isUserLoading] = useUser();
+
+    const userRole = dbUser?.role;
+
+    if (isUserLoading) {
+        return (
+            <div className="space-y-6 animate-pulse">
+                <div className="h-40 bg-neutral-200 dark:bg-neutral-800 rounded-3xl" />
+                <div className="grid grid-cols-3 gap-6">
+                    {[1, 2, 3].map(i => <div key={i} className="h-32 bg-neutral-200 dark:bg-neutral-800 rounded-2xl" />)}
+                </div>
+            </div>
+        );
+    }
+
+    if (userRole === 'admin') return <AdminDashboard user={user} />;
+    if (userRole === 'buyer') return <BuyerDashboard user={user} dbUser={dbUser} />;
+    return <WorkerDashboard user={user} dbUser={dbUser} />;
 };
 
 export default DashboardHome;

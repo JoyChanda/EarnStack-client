@@ -1,5 +1,6 @@
 import { useState, useContext } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import axios from "axios";
 import { AuthContext } from "../providers/AuthProvider";
 import { Input, Button, Card } from "../components/ui";
 import { validateEmail, validateRequired } from "../utils/validation";
@@ -40,7 +41,7 @@ const Login = () => {
         try {
             const result = await signInUser(formData.email, formData.password);
             await getToken(result.user);
-            navigate("/");
+            navigate("/dashboard");
         } catch (error) {
             setErrors({ general: "Invalid email or password. Please try again." });
             console.error(error);
@@ -53,8 +54,16 @@ const Login = () => {
         setSocialLoading(true);
         try {
             const result = await googleSignIn();
-            await getToken(result.user);
-            navigate("/");
+            const fbUser = result.user;
+            // Save to DB (server ignores if already exists)
+            await axios.post(`${import.meta.env.VITE_API_URL}/users`, {
+                name: fbUser.displayName,
+                email: fbUser.email,
+                image: fbUser.photoURL,
+                role: "worker",
+            });
+            await getToken(fbUser);
+            navigate("/dashboard");
         } catch (error) {
             console.error(error);
         } finally {
@@ -74,7 +83,7 @@ const Login = () => {
         try {
             const result = await signInUser(creds.email, creds.pass);
             await getToken(result.user);
-            navigate("/");
+            navigate("/dashboard");
         } catch (error) {
             setErrors({ general: "Demo login failed. Please try again." });
             console.error(error);

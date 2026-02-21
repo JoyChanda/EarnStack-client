@@ -74,21 +74,22 @@ const Register = () => {
             await updateUserProfile(formData.name, formData.photo);
 
             // 3. Save User & Role to Database (MongoDB)
+            const normalizedRole = formData.role === "TaskCreator" ? "buyer" : "worker";
             const userInfo = {
                 name: formData.name,
                 email: formData.email,
                 image: formData.photo,
-                role: formData.role === "TaskCreator" ? "buyer" : "worker",
+                role: normalizedRole,
             };
             
             // Note: We use the base API URL directly or an axios call here
             await axios.post(`${import.meta.env.VITE_API_URL}/users`, userInfo);
 
-            // 4. Get JWT
-            await getToken({ email: formData.email, role: formData.role.toLowerCase() });
+            // 4. Get JWT with correct role
+            await getToken({ email: formData.email, role: normalizedRole });
             
             setLoading(false);
-            navigate("/"); 
+            navigate("/dashboard"); 
         } catch (err) {
             console.error(err);
             setErrors({ general: err.message });

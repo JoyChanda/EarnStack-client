@@ -2,11 +2,18 @@ import { useContext, useState } from "react";
 import axiosSecure from "../../../services/axiosSecure";
 import { AuthContext } from "../../../providers/AuthProvider";
 import { Card, Input, Button } from "../../../components/ui";
+import useUser from "../../../hooks/useUser";
 
 const AddTask = () => {
     const { user } = useContext(AuthContext);
+    const [dbUser, , refetchUser] = useUser();
     const [loading, setLoading] = useState(false);
     const [previewImage, setPreviewImage] = useState(null);
+    const [workers, setWorkers] = useState('');
+    const [pay, setPay] = useState('');
+
+    const totalPayable = (Number(workers) || 0) * (Number(pay) || 0);
+    const hasEnoughCoins = (dbUser?.coin || 0) >= totalPayable && totalPayable > 0;
 
     const handleAddTask = async (e) => {
         e.preventDefault();
@@ -26,12 +33,12 @@ const AddTask = () => {
             createdAt: new Date(),
         };
 
-        const totalPayable = task.required_workers * task.payable_amount;
+        const totalCost = task.required_workers * task.payable_amount;
 
         try {
             const res = await axiosSecure.post("/tasks", {
                 task,
-                totalPayable,
+                totalPayable: totalCost,
             });
 
             if (res.data.error) {
@@ -40,6 +47,9 @@ const AddTask = () => {
                 alert("Task added successfully! 🎉");
                 form.reset();
                 setPreviewImage(null);
+                setWorkers('');
+                setPay('');
+                refetchUser();
             }
         } catch (error) {
             console.error("Error adding task:", error);
@@ -92,14 +102,18 @@ const AddTask = () => {
                             min="1"
                             placeholder="10"
                             required
+                            value={workers}
+                            onChange={(e) => setWorkers(e.target.value)}
                         />
                         <Input
-                            label="Payable Amount (Per Worker)"
+                            label="Payable Amount (Per Worker) 🪙"
                             name="pay"
                             type="number"
                             min="1"
                             placeholder="150"
                             required
+                            value={pay}
+                            onChange={(e) => setPay(e.target.value)}
                         />
 
                         {/* Date & Submission */}
@@ -145,21 +159,41 @@ const AddTask = () => {
                     </div>
 
                     {/* Submit Area */}
-                    <div className="pt-6 border-t border-neutral-100 dark:border-neutral-800 flex flex-col md:flex-row md:items-center justify-between gap-6">
-                        <div className="space-y-1">
-                            <p className="text-sm font-bold text-neutral-500">Summary</p>
-                            <p className="text-xl font-black text-primary-600">
-                                Global Investment: <span className="text-neutral-900 dark:text-white">Coins depending on inputs</span>
-                            </p>
+                    <div className="pt-6 border-t border-neutral-100 dark:border-neutral-800">
+                        {/* Coin Summary */}
+                        <div className="mb-6 p-4 rounded-2xl bg-primary-50 dark:bg-primary-900/10 border border-primary-100 dark:border-primary-800/50">
+                            <div className="flex flex-wrap items-center justify-between gap-4">
+                                <div>
+                                    <p className="text-xs font-bold text-neutral-500 uppercase tracking-widest mb-1">Cost Summary</p>
+                                    <p className="text-2xl font-black text-primary-600">
+                                        🪙 {totalPayable > 0 ? totalPayable.toLocaleString() : '—'}
+                                    </p>
+                                    <p className="text-xs text-neutral-500 mt-1">
+                                        {workers && pay ? `${workers} workers × ${pay} coins each` : 'Enter workers and pay amount'}
+                                    </p>
+                                </div>
+                                <div className="text-right">
+                                    <p className="text-xs font-bold text-neutral-500 uppercase tracking-widest mb-1">Your Balance</p>
+                                    <p className={`text-2xl font-black ${hasEnoughCoins || totalPayable === 0 ? 'text-green-600' : 'text-red-500'}`}>
+                                        🪙 {dbUser?.coin || 0}
+                                    </p>
+                                    {totalPayable > 0 && !hasEnoughCoins && (
+                                        <p className="text-xs text-red-500 font-bold mt-1">Insufficient coins!</p>
+                                    )}
+                                </div>
+                            </div>
                         </div>
+                        <div className="flex justify-end">
                         <Button 
                             type="submit" 
                             size="lg" 
                             className="px-12 font-black shadow-primary-500/25"
                             loading={loading}
+                            disabled={totalPayable > 0 && !hasEnoughCoins}
                         >
                             Publish Task
                         </Button>
+                        </div>
                     </div>
                 </form>
             </Card>

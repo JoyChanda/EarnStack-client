@@ -14,6 +14,7 @@ import Profile from "./pages/Dashboard/Profile";
 import ManageUsers from "./pages/Dashboard/ManageUsers";
 import WorkerSubmissions from "./pages/Dashboard/WorkerSubmissions";
 import AddTask from "./pages/Dashboard/Buyer/AddTask";
+import MyTasks from "./pages/Dashboard/Buyer/MyTasks";
 import PurchaseCoin from "./pages/Dashboard/Buyer/PurchaseCoin";
 import Withdraw from "./pages/Dashboard/Worker/Withdraw";
 import ManageWithdrawals from "./pages/Dashboard/Admin/ManageWithdrawals";
@@ -51,7 +52,7 @@ function App() {
         <Route path="withdraw" element={<Withdraw />} />
 
         <Route path="add-tasks" element={<AddTask />} />
-        <Route path="my-tasks" element={<DashboardHome />} />
+        <Route path="my-tasks" element={<MyTasks />} />
         <Route path="payments" element={<PurchaseCoin />} />
       </Route>
     </Routes>
