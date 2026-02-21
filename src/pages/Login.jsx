@@ -73,20 +73,67 @@ const Login = () => {
 
     const handleDemoLogin = async (role) => {
         const demoCredentials = {
-            admin: { email: "admin@earnstack.com", pass: "Admin123!" },
-            worker: { email: "worker@earnstack.com", pass: "Worker123!" },
-            buyer: { email: "buyer@earnstack.com", pass: "Buyer123!" }
+            admin:  { email: "admin@earnstack.com",  pass: "Admin123!",  name: "Admin User"  },
+            worker: { email: "worker@earnstack.com", pass: "Worker123!", name: "Demo Worker" },
+            buyer:  { email: "buyer@earnstack.com",  pass: "Buyer123!",  name: "Demo Buyer"  }
         };
         const creds = demoCredentials[role];
-        
+
         setLoading(true);
+        setErrors({});
         try {
-            const result = await signInUser(creds.email, creds.pass);
-            await getToken(result.user);
+            let fbUser;
+
+            // Step 1: Firebase sign-in (create account if it doesn't exist yet)
+            try {
+                const result = await signInUser(creds.email, creds.pass);
+                fbUser = result.user;
+            } catch (signInErr) {
+                if (
+                    signInErr.code === "auth/user-not-found" ||
+                    signInErr.code === "auth/invalid-credential" ||
+                    signInErr.code === "auth/wrong-password"
+                ) {
+                    const { createUserWithEmailAndPassword, updateProfile, getAuth } = await import("firebase/auth");
+                    const { app } = await import("../firebase/firebase.config");
+                    const auth = getAuth(app);
+                    const newResult = await createUserWithEmailAndPassword(auth, creds.email, creds.pass);
+                    fbUser = newResult.user;
+                    await updateProfile(fbUser, {
+                        displayName: creds.name,
+                        photoURL: `https://ui-avatars.com/api/?name=${encodeURIComponent(creds.name)}&background=8b5cf6&color=fff`,
+                    });
+                } else {
+                    throw signInErr;
+                }
+            }
+
+            // Step 2: Upsert MongoDB (non-blocking — don't fail login if server is slow/down)
+            try {
+                await axios.post(`${import.meta.env.VITE_API_URL}/users`, {
+                    name: fbUser.displayName || creds.name,
+                    email: creds.email,
+                    image: fbUser.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(creds.name)}&background=8b5cf6&color=fff`,
+                    role,
+                });
+            } catch {
+                // ignore — user may already exist or server temporarily unavailable
+            }
+
+            // Step 4: Get JWT and navigate
+            // We navigate immediately after Firebase login + attempting DB upsert
+            // Even if getToken fails (due to DB issue), we let the user into the dashboard
+            try {
+                await getToken({ ...fbUser, role });
+            } catch (jwtErr) {
+                console.error("JWT fetch failed, proceed anyway:", jwtErr);
+            }
+            
             navigate("/dashboard");
+
         } catch (error) {
-            setErrors({ general: "Demo login failed. Please try again." });
-            console.error(error);
+            console.error("Demo login error:", error);
+            setErrors({ general: `Demo login failed: ${error.message || "Please try again."}` });
         } finally {
             setLoading(false);
         }

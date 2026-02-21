@@ -1,14 +1,13 @@
 import { useState, useContext } from "react";
-import { Link, NavLink, Outlet, useNavigate } from "react-router-dom";
+import { Link, NavLink, Outlet, useNavigate, Navigate } from "react-router-dom";
 import { AuthContext } from "../providers/AuthProvider";
 import { useTheme } from "../providers/ThemeProvider";
 import ThemeToggle from "../components/Shared/ThemeToggle";
-import { Button } from "../components/ui";
 import useUser from "../hooks/useUser";
 import NotificationDropdown from "../components/Dashboard/NotificationDropdown";
 
 const DashboardLayout = () => {
-    const { user, logOut } = useContext(AuthContext);
+    const { user, logOut, loading } = useContext(AuthContext);
     const [dbUser, isUserLoading] = useUser();
     const { theme } = useTheme();
     const [isSidebarOpen, setIsSidebarOpen] = useState(true);
@@ -47,6 +46,19 @@ const DashboardLayout = () => {
     ];
 
     const links = userRole === 'admin' ? adminLinks : userRole === 'buyer' ? buyerLinks : workerLinks;
+
+    // Auth guard
+    if (loading) {
+        return (
+            <div className="min-h-screen flex items-center justify-center bg-neutral-50 dark:bg-neutral-950">
+                <div className="flex flex-col items-center gap-4">
+                    <div className="w-12 h-12 border-4 border-primary-500 border-t-transparent rounded-full animate-spin" />
+                    <p className="text-sm font-bold text-neutral-400 uppercase tracking-widest">Loading...</p>
+                </div>
+            </div>
+        );
+    }
+    if (!user) return <Navigate to="/login" replace />;
 
     return (
         <div className="flex min-h-screen bg-neutral-50 dark:bg-neutral-950 transition-colors duration-300">

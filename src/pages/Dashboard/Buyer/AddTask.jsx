@@ -1,22 +1,50 @@
 import { useContext, useState } from "react";
 import axiosSecure from "../../../services/axiosSecure";
+import axios from "axios";
 import { AuthContext } from "../../../providers/AuthProvider";
 import { Card, Input, Button } from "../../../components/ui";
 import useUser from "../../../hooks/useUser";
+
+const IMGBB_API_KEY = import.meta.env.VITE_IMGBB_API_KEY;
 
 const AddTask = () => {
     const { user } = useContext(AuthContext);
     const [dbUser, , refetchUser] = useUser();
     const [loading, setLoading] = useState(false);
-    const [previewImage, setPreviewImage] = useState(null);
+    const [imageUploading, setImageUploading] = useState(false);
+    const [uploadedImageUrl, setUploadedImageUrl] = useState('');
     const [workers, setWorkers] = useState('');
     const [pay, setPay] = useState('');
+
+    const handleImageUpload = async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        setImageUploading(true);
+        try {
+            const formData = new FormData();
+            formData.append('image', file);
+            const res = await axios.post(
+                `https://api.imgbb.com/1/upload?key=${IMGBB_API_KEY}`,
+                formData
+            );
+            setUploadedImageUrl(res.data.data.url);
+        } catch (err) {
+            alert('Image upload failed. Check your imgBB API key or try again.');
+            console.error(err);
+        } finally {
+            setImageUploading(false);
+        }
+    };
 
     const totalPayable = (Number(workers) || 0) * (Number(pay) || 0);
     const hasEnoughCoins = (dbUser?.coin || 0) >= totalPayable && totalPayable > 0;
 
     const handleAddTask = async (e) => {
         e.preventDefault();
+        if (!uploadedImageUrl) {
+            alert('Please upload a task image first.');
+            return;
+        }
         setLoading(true);
 
         const form = e.target;
@@ -27,7 +55,7 @@ const AddTask = () => {
             payable_amount: Number(form.pay.value),
             completion_date: form.date.value,
             submission_info: form.submission.value,
-            task_image_url: form.image.value,
+            task_image_url: uploadedImageUrl,
             buyer_email: user?.email,
             buyer_name: user?.displayName,
             createdAt: new Date(),
@@ -46,7 +74,7 @@ const AddTask = () => {
             } else {
                 alert("Task added successfully! 🎉");
                 form.reset();
-                setPreviewImage(null);
+                setUploadedImageUrl('');
                 setWorkers('');
                 setPay('');
                 refetchUser();
@@ -130,32 +158,43 @@ const AddTask = () => {
                             required
                         />
 
-                        {/* Image URL */}
-                        <div className="md:col-span-2">
-                            <Input
-                                label="Task Image URL"
-                                name="image"
-                                type="url"
-                                placeholder="https://example.com/image.jpg"
-                                onChange={(e) => setPreviewImage(e.target.value)}
-                                required
-                            />
-                        </div>
-
-                        {/* Image Preview */}
-                        {previewImage && (
-                            <div className="md:col-span-2 mt-2">
-                                <p className="text-xs font-bold text-neutral-400 uppercase tracking-widest mb-2">Image Preview</p>
-                                <div className="aspect-video w-full max-h-[300px] rounded-2xl overflow-hidden border border-neutral-200 dark:border-neutral-800 shadow-lg">
-                                    <img 
-                                        src={previewImage} 
-                                        alt="Preview" 
-                                        className="w-full h-full object-cover"
-                                        onError={() => setPreviewImage(null)}
-                                    />
-                                </div>
+                        {/* Image Upload (imgBB) */}
+                        <div className="md:col-span-2 space-y-3">
+                            <label className="text-xs font-bold text-neutral-500 uppercase tracking-widest block">Task Image</label>
+                            <div className={`relative border-2 border-dashed rounded-2xl p-6 text-center transition-colors ${
+                                uploadedImageUrl 
+                                    ? 'border-green-400 bg-green-50 dark:bg-green-900/10' 
+                                    : 'border-neutral-200 dark:border-neutral-700 hover:border-primary-400 bg-neutral-50 dark:bg-neutral-900/50'
+                            }`}>
+                                <input
+                                    type="file"
+                                    accept="image/*"
+                                    onChange={handleImageUpload}
+                                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                                    disabled={imageUploading}
+                                />
+                                {imageUploading ? (
+                                    <div className="flex flex-col items-center gap-2">
+                                        <div className="w-8 h-8 border-4 border-primary-500 border-t-transparent rounded-full animate-spin" />
+                                        <p className="text-sm font-bold text-primary-500">Uploading to imgBB...</p>
+                                    </div>
+                                ) : uploadedImageUrl ? (
+                                    <div className="flex flex-col items-center gap-3">
+                                        <div className="w-full max-h-40 rounded-xl overflow-hidden">
+                                            <img src={uploadedImageUrl} alt="Uploaded" className="w-full h-full object-cover" />
+                                        </div>
+                                        <p className="text-xs font-bold text-green-600">✅ Image uploaded successfully!</p>
+                                        <p className="text-[10px] text-neutral-400">Click to change image</p>
+                                    </div>
+                                ) : (
+                                    <div className="flex flex-col items-center gap-2">
+                                        <span className="text-3xl">🖼️</span>
+                                        <p className="text-sm font-bold text-neutral-600 dark:text-neutral-400">Click or drag to upload an image</p>
+                                        <p className="text-xs text-neutral-400">PNG, JPG, WebP — Uploaded via imgBB</p>
+                                    </div>
+                                )}
                             </div>
-                        )}
+                        </div>
                     </div>
 
                     {/* Submit Area */}

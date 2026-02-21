@@ -9,7 +9,7 @@ const useAuthToken = () => {
 
       if (!role && user?.email) {
         try {
-          const dbRes = await axios.get(`${import.meta.env.VITE_API_URL}/users/role/${user.email}`);
+          const dbRes = await axios.get(`${import.meta.env.VITE_API_URL}/users/check-role/${user.email}`);
           role = dbRes.data?.role;
         } catch {
           // If user doesn't exist in DB yet (e.g., first-time Google signup), default to worker

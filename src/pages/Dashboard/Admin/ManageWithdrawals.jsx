@@ -66,7 +66,7 @@ const ManageWithdrawals = () => {
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-neutral-100 dark:divide-neutral-800">
-                            {withdrawals?.map((w) => (
+                            {withdrawals?.filter(w => w.status === 'pending').map((w) => (
                                 <tr key={w._id} className="hover:bg-neutral-50/50 dark:hover:bg-neutral-800/50 transition-colors">
                                     <td className="py-5 px-6">
                                         <div>
@@ -97,20 +97,14 @@ const ManageWithdrawals = () => {
                                         </Badge>
                                     </td>
                                     <td className="py-5 px-6 text-right">
-                                        {w.status === 'pending' ? (
-                                            <Button 
-                                                size="sm" 
-                                                className="font-black text-[10px] px-4 py-2 shadow-lg shadow-primary-500/20"
-                                                onClick={() => handleApprove(w._id)}
-                                                loading={approving === w._id}
-                                            >
-                                                Approve Payment
-                                            </Button>
-                                        ) : (
-                                            <span className="text-green-500 text-sm font-black flex items-center justify-end gap-1">
-                                                <span>✓</span> Paid out
-                                            </span>
-                                        )}
+                                        <Button 
+                                            size="sm" 
+                                            className="font-black text-[10px] px-4 py-2 shadow-lg shadow-primary-500/20"
+                                            onClick={() => handleApprove(w._id)}
+                                            loading={approving === w._id}
+                                        >
+                                            Payment Success
+                                        </Button>
                                     </td>
                                 </tr>
                             ))}

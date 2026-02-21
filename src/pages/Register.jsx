@@ -22,6 +22,11 @@ const Register = () => {
         role: 'Worker'
     });
 
+    const [imageUploading, setImageUploading] = useState(false);
+    const [uploadedImageUrl, setUploadedImageUrl] = useState('');
+    
+    const IMGBB_API_KEY = import.meta.env.VITE_IMGBB_API_KEY;
+
     // Handle input changes
     const handleChange = (e) => {
         const { name, value } = e.target;
@@ -30,6 +35,29 @@ const Register = () => {
         // Clear error for this field when user types
         if (errors[name]) {
             setErrors(prev => ({ ...prev, [name]: null }));
+        }
+    };
+
+    const handleImageUpload = async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        
+        setImageUploading(true);
+        const imgFormData = new FormData();
+        imgFormData.append('image', file);
+        
+        try {
+            const res = await axios.post(`https://api.imgbb.com/1/upload?key=${IMGBB_API_KEY}`, imgFormData);
+            if (res.data.success) {
+                setUploadedImageUrl(res.data.data.url);
+                setFormData(prev => ({ ...prev, photo: res.data.data.url }));
+                setErrors(prev => ({ ...prev, photo: null }));
+            }
+        } catch (err) {
+            console.error("Image upload failed:", err);
+            setErrors(prev => ({ ...prev, photo: "Image upload failed. Try again." }));
+        } finally {
+            setImageUploading(false);
         }
     };
 
@@ -136,18 +164,43 @@ const Register = () => {
                         className="bg-white/5"
                     />
 
-                    {/* Photo URL Input */}
-                    <Input
-                        label="Photo URL"
-                        type="url"
-                        name="photo"
-                        placeholder="https://example.com/photo.jpg"
-                        value={formData.photo}
-                        onChange={handleChange}
-                        error={errors.photo}
-                        required
-                        className="bg-white/5"
-                    />
+                    {/* Photo Upload (imgBB) */}
+                    <div className="space-y-2">
+                        <label className="label-base text-neutral-300">
+                            Profile Picture <span className="text-red-400">*</span>
+                        </label>
+                        <div className={`relative border-2 border-dashed rounded-2xl p-4 text-center transition-all bg-white/5 ${
+                            uploadedImageUrl ? 'border-primary-500/50 bg-primary-500/5' : 'border-white/10 hover:border-white/20'
+                        }`}>
+                            <input
+                                type="file"
+                                accept="image/*"
+                                onChange={handleImageUpload}
+                                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                                disabled={imageUploading}
+                            />
+                            {imageUploading ? (
+                                <div className="flex flex-col items-center gap-2 py-2">
+                                    <div className="w-6 h-6 border-2 border-primary-400 border-t-transparent rounded-full animate-spin" />
+                                    <p className="text-[10px] font-bold text-primary-400">Uploading...</p>
+                                </div>
+                            ) : uploadedImageUrl ? (
+                                <div className="flex items-center gap-4 text-left">
+                                    <img src={uploadedImageUrl} alt="Preview" className="w-12 h-12 rounded-xl object-cover ring-2 ring-primary-500/30" />
+                                    <div>
+                                        <p className="text-xs font-bold text-primary-400">Success!</p>
+                                        <p className="text-[10px] text-neutral-400">Click to change</p>
+                                    </div>
+                                </div>
+                            ) : (
+                                <div className="py-2">
+                                    <p className="text-sm font-bold text-neutral-300">Choose Profile Image</p>
+                                    <p className="text-[10px] text-neutral-500 mt-0.5">JPG, PNG or WebP</p>
+                                </div>
+                            )}
+                        </div>
+                        {errors.photo && <p className="text-[10px] text-red-400 font-bold mt-1">{errors.photo}</p>}
+                    </div>
 
                     {/* Password Input */}
                     <Input

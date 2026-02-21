@@ -45,7 +45,9 @@ const WorkerDashboard = ({ user, dbUser }) => {
                     <p className="text-primary-100/90 text-sm">You have <span className="font-black">🪙 {dbUser?.coin || 0}</span> coins in your wallet.</p>
                 </div>
                 <Link to="/tasks">
-                    <Button className="bg-white text-primary-600 hover:bg-neutral-100 font-bold">Browse Tasks</Button>
+                    <button className="px-6 py-2.5 bg-white text-primary-700 font-black rounded-xl hover:bg-neutral-100 transition-colors shadow-lg text-sm">
+                        Browse Tasks
+                    </button>
                 </Link>
             </div>
 
@@ -134,7 +136,9 @@ const BuyerDashboard = ({ user, dbUser }) => {
                     <p className="text-primary-100/90 text-sm">Balance: <span className="font-black">🪙 {dbUser?.coin || 0}</span> coins available.</p>
                 </div>
                 <Link to="/dashboard/add-tasks">
-                    <Button className="bg-white text-secondary-600 hover:bg-neutral-100 font-bold">Post New Task</Button>
+                    <button className="px-6 py-2.5 bg-white text-secondary-700 font-black rounded-xl hover:bg-neutral-100 transition-colors shadow-lg text-sm">
+                        Post New Task
+                    </button>
                 </Link>
             </div>
 
@@ -221,7 +225,9 @@ const AdminDashboard = ({ user }) => {
                     <p className="text-neutral-300 text-sm">Manage the entire EarnStack platform from here.</p>
                 </div>
                 <Link to="/dashboard/manage-users">
-                    <Button className="bg-white text-neutral-900 hover:bg-neutral-100 font-bold">Manage Users</Button>
+                    <button className="px-6 py-2.5 bg-white text-neutral-900 font-black rounded-xl hover:bg-neutral-100 transition-colors shadow-lg text-sm">
+                        Manage Users
+                    </button>
                 </Link>
             </div>
 
@@ -230,10 +236,10 @@ const AdminDashboard = ({ user }) => {
                     [...Array(4)].map((_, i) => <div key={i} className="h-32 bg-neutral-200 dark:bg-neutral-800 animate-pulse rounded-2xl" />)
                 ) : (
                     <>
-                        <StatCard icon="👷" label="Total Workers" value={stats?.totalWorkers ?? 0} />
-                        <StatCard icon="🛒" label="Total Buyers" value={stats?.totalBuyers ?? 0} />
-                        <StatCard icon="🪙" label="Total Coins in System" value={stats?.totalCoins ?? 0} />
-                        <StatCard icon="💰" label="Total Revenue" value={`$${stats?.totalPaymentAmount ?? 0}`} />
+                        <StatCard icon="👷" label="Total Worker" value={stats?.totalWorkers ?? 0} />
+                        <StatCard icon="🛒" label="Total Buyer" value={stats?.totalBuyers ?? 0} />
+                        <StatCard icon="🪙" label="Total Available Coin" value={stats?.totalCoins ?? 0} />
+                        <StatCard icon="💰" label="Total Payments" value={`$${stats?.totalPaymentAmount ?? 0}`} />
                     </>
                 )}
             </div>

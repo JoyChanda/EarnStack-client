@@ -13,7 +13,7 @@ import 'swiper/css/pagination';
 import 'swiper/css/effect-fade';
 
 const Hero = () => {
-    const { signInUser } = useContext(AuthContext);
+    const { signInUser, user } = useContext(AuthContext);
     const getToken = useAuthToken();
     const navigate = useNavigate();
     const [loading, setLoading] = useState(false);
@@ -99,7 +99,7 @@ const Hero = () => {
                                 </p>
                                 <div className="flex flex-col items-center gap-6 animate-slide-up" style={{ animationDelay: '0.4s' }}>
                                     <div className="flex gap-4">
-                                        <Link to={slide.buttonLink}>
+                                        <Link to={user ? "/dashboard" : "/login"}>
                                             <Button size="lg" className="shadow-2xl">{slide.buttonText}</Button>
                                         </Link>
                                         <Link to="/how-it-works">
@@ -108,29 +108,31 @@ const Hero = () => {
                                     </div>
                                     
                                     {/* Demo Access Buttons */}
-                                    <div className="flex flex-col items-center gap-3">
-                                        <span className="text-[10px] font-black uppercase tracking-[0.2em] text-white/40">Quick Demo Access</span>
-                                        <div className="flex gap-2">
-                                            <Button 
-                                                variant="outline" 
-                                                size="sm" 
-                                                onClick={() => handleDemoLogin('worker')}
-                                                loading={loading}
-                                                className="bg-white/5 border-white/10 text-white/70 hover:bg-primary-600 hover:border-primary-600 hover:text-white text-xs py-1 h-auto"
-                                            >
-                                                Demo Worker
-                                            </Button>
-                                            <Button 
-                                                variant="outline" 
-                                                size="sm" 
-                                                onClick={() => handleDemoLogin('buyer')}
-                                                loading={loading}
-                                                className="bg-white/5 border-white/10 text-white/70 hover:bg-secondary-600 hover:border-secondary-600 hover:text-white text-xs py-1 h-auto"
-                                            >
-                                                Demo Buyer
-                                            </Button>
+                                    {!user && (
+                                        <div className="flex flex-col items-center gap-3">
+                                            <span className="text-[10px] font-black uppercase tracking-[0.2em] text-white/40">Quick Demo Access</span>
+                                            <div className="flex gap-2">
+                                                <Button 
+                                                    variant="outline" 
+                                                    size="sm" 
+                                                    onClick={() => handleDemoLogin('worker')}
+                                                    loading={loading}
+                                                    className="bg-white/5 border-white/10 text-white/70 hover:bg-primary-600 hover:border-primary-600 hover:text-white text-xs py-1 h-auto"
+                                                >
+                                                    Demo Worker
+                                                </Button>
+                                                <Button 
+                                                    variant="outline" 
+                                                    size="sm" 
+                                                    onClick={() => handleDemoLogin('buyer')}
+                                                    loading={loading}
+                                                    className="bg-white/5 border-white/10 text-white/70 hover:bg-secondary-600 hover:border-secondary-600 hover:text-white text-xs py-1 h-auto"
+                                                >
+                                                    Demo Buyer
+                                                </Button>
+                                            </div>
                                         </div>
-                                    </div>
+                                    )}
                                 </div>
                             </div>
                         </div>

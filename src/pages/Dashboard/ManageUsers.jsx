@@ -73,9 +73,10 @@ const ManageUsers = () => {
                     <table className="w-full text-left border-collapse">
                         <thead>
                             <tr className="bg-neutral-50 dark:bg-neutral-900/50 border-b border-neutral-100 dark:border-neutral-800">
-                                <th className="py-5 px-6 text-[10px] font-black uppercase tracking-widest text-neutral-400">User Identity</th>
-                                <th className="py-5 px-6 text-[10px] font-black uppercase tracking-widest text-neutral-400">Current Role</th>
-                                <th className="py-5 px-6 text-[10px] font-black uppercase tracking-widest text-neutral-400">Coins Balance</th>
+                                <th className="py-5 px-6 text-[10px] font-black uppercase tracking-widest text-neutral-400">Display Name / Photo</th>
+                                <th className="py-5 px-6 text-[10px] font-black uppercase tracking-widest text-neutral-400">User Email</th>
+                                <th className="py-5 px-6 text-[10px] font-black uppercase tracking-widest text-neutral-400">Role</th>
+                                <th className="py-5 px-6 text-[10px] font-black uppercase tracking-widest text-neutral-400">Coin</th>
                                 <th className="py-5 px-6 text-right text-[10px] font-black uppercase tracking-widest text-neutral-400">Quick Actions</th>
                             </tr>
                         </thead>
@@ -91,11 +92,11 @@ const ManageUsers = () => {
                                                     u.name?.charAt(0)
                                                 )}
                                             </div>
-                                            <div>
-                                                <p className="font-bold text-neutral-900 dark:text-white text-sm">{u.name}</p>
-                                                <p className="text-xs text-neutral-500">{u.email}</p>
-                                            </div>
+                                            <p className="font-bold text-neutral-900 dark:text-white text-sm">{u.name}</p>
                                         </div>
+                                    </td>
+                                    <td className="py-5 px-6">
+                                        <p className="text-xs text-neutral-500">{u.email}</p>
                                     </td>
                                     <td className="py-5 px-6">
                                         <Badge 
@@ -140,10 +141,10 @@ const ManageUsers = () => {
                                             <Button 
                                                 variant="danger" 
                                                 size="sm" 
-                                                className="h-8 w-8 p-0"
+                                                className="h-8 px-3 text-[10px] font-black uppercase"
                                                 onClick={() => handleDeleteUser(u._id)}
                                             >
-                                                🗑️
+                                                Remove User
                                             </Button>
                                         </div>
                                     </td>

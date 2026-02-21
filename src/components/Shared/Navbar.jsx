@@ -36,18 +36,22 @@ const Navbar = () => {
 
     const navLinks = (
         <>
-            <NavLink to="/" className={({ isActive }) => `font-medium text-sm transition-colors hover:text-primary-500 ${isActive ? 'text-primary-500' : 'text-neutral-700 dark:text-neutral-300'}`}>Home</NavLink>
+        <NavLink to="/" className={({ isActive }) => `font-medium text-sm transition-colors hover:text-primary-500 ${isActive ? 'text-primary-500' : 'text-neutral-800 dark:text-neutral-200'}`}>Home</NavLink>
             {user && (
-                <NavLink to="/dashboard" className={({ isActive }) => `font-medium text-sm transition-colors hover:text-primary-500 ${isActive ? 'text-primary-500' : 'text-neutral-700 dark:text-neutral-300'}`}>Dashboard</NavLink>
+                <NavLink to="/dashboard" className={({ isActive }) => `font-medium text-sm transition-colors hover:text-primary-500 ${isActive ? 'text-primary-500' : 'text-neutral-800 dark:text-neutral-200'}`}>Dashboard</NavLink>
             )}
-            <a href="https://github.com" target="_blank" rel="noopener noreferrer" className="font-medium text-sm text-neutral-700 dark:text-neutral-300 transition-colors hover:text-primary-500 flex items-center gap-1">
+            <a href="https://github.com" target="_blank" rel="noopener noreferrer" className="font-medium text-sm text-neutral-800 dark:text-neutral-200 transition-colors hover:text-primary-500 flex items-center gap-1">
                 Join as Developer
             </a>
         </>
     );
 
     return (
-        <nav className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${isScrolled ? 'bg-white/80 dark:bg-neutral-950/80 backdrop-blur-md shadow-lg py-2' : 'bg-transparent py-4'}`}>
+        <nav className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
+            isScrolled 
+                ? 'bg-white/90 dark:bg-neutral-950/90 backdrop-blur-md shadow-lg py-2 border-b border-neutral-200/50 dark:border-neutral-800/50' 
+                : 'bg-white/80 dark:bg-neutral-950/70 backdrop-blur-sm py-4 border-b border-neutral-200/30 dark:border-transparent'
+        }`}>
             <div className="max-w-7xl mx-auto container-padding flex items-center justify-between">
                 {/* Logo */}
                 <Link to="/" className="flex items-center gap-2 group">
@@ -70,14 +74,6 @@ const Navbar = () => {
 
                     {user ? (
                         <div className="flex items-center gap-3 md:gap-4">
-                            {/* Coin Display */}
-                            <div className="flex items-center gap-2 bg-primary-100 dark:bg-primary-900/30 px-3 py-1.5 rounded-full border border-primary-200 dark:border-primary-800/50">
-                                <div className="w-5 h-5 bg-yellow-400 rounded-full flex items-center justify-center text-[10px] font-bold text-yellow-900 shadow-sm">
-                                    $
-                                </div>
-                                <span className="font-bold text-xs sm:text-sm text-primary-700 dark:text-primary-400">{userCoins}</span>
-                            </div>
-
                             {/* Profile Dropdown */}
                             <div className="relative">
                                 <button 
@@ -119,10 +115,14 @@ const Navbar = () => {
                     ) : (
                         <div className="flex items-center gap-2">
                             <Link to="/login">
-                                <Button variant="ghost" size="sm" className="hidden xs:flex">Login</Button>
+                                <button className="hidden xs:flex px-4 py-2 text-sm font-bold text-neutral-800 dark:text-neutral-200 hover:text-primary-600 dark:hover:text-primary-400 transition-colors rounded-xl hover:bg-neutral-100 dark:hover:bg-neutral-800">
+                                    Login
+                                </button>
                             </Link>
                             <Link to="/register">
-                                <Button variant="primary" size="sm">Register</Button>
+                                <button className="px-4 py-2 text-sm font-bold bg-primary-600 hover:bg-primary-700 text-white rounded-xl transition-colors shadow-md shadow-primary-500/20">
+                                    Register
+                                </button>
                             </Link>
                         </div>
                     )}
