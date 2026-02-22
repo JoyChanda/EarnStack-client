@@ -12,4 +12,14 @@ axiosSecure.interceptors.request.use((config) => {
   return config;
 });
 
+axiosSecure.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response && (error.response.status === 401 || error.response.status === 403)) {
+      localStorage.removeItem("access-token");
+    }
+    return Promise.reject(error);
+  }
+);
+
 export default axiosSecure;

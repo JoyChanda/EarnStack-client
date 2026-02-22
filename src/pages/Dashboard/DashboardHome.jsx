@@ -1,5 +1,5 @@
 import { useContext } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { AuthContext } from '../../providers/AuthProvider';
 import { Card, Button } from '../../components/ui';
@@ -231,15 +231,17 @@ const AdminDashboard = ({ user }) => {
                 </Link>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-6">
                 {isLoading ? (
-                    [...Array(4)].map((_, i) => <div key={i} className="h-32 bg-neutral-200 dark:bg-neutral-800 animate-pulse rounded-2xl" />)
+                    [...Array(6)].map((_, i) => <div key={i} className="h-32 bg-neutral-200 dark:bg-neutral-800 animate-pulse rounded-2xl" />)
                 ) : (
                     <>
-                        <StatCard icon="👷" label="Total Worker" value={stats?.totalWorkers ?? 0} />
-                        <StatCard icon="🛒" label="Total Buyer" value={stats?.totalBuyers ?? 0} />
-                        <StatCard icon="🪙" label="Total Available Coin" value={stats?.totalCoins ?? 0} />
-                        <StatCard icon="💰" label="Total Payments" value={`$${stats?.totalPaymentAmount ?? 0}`} />
+                        <StatCard icon="👷" label="Workers" value={stats?.totalWorkers ?? 0} />
+                        <StatCard icon="🛒" label="Buyers" value={stats?.totalBuyers ?? 0} />
+                        <StatCard icon="🪙" label="Total Coins" value={(stats?.totalCoins ?? 0).toLocaleString()} />
+                        <StatCard icon="💰" label="Payments" value={`$${(stats?.totalPaymentAmount ?? 0).toLocaleString()}`} />
+                        <StatCard icon="🧾" label="Pending Revenue" value={`🪙 ${(stats?.totalPendingRevenue ?? 0).toLocaleString()}`} />
+                        <StatCard icon="💳" label="Withdrawals" value={`$${(stats?.totalWithdrawalAmount ?? 0).toLocaleString()}`} />
                     </>
                 )}
             </div>
@@ -280,25 +282,46 @@ const AdminDashboard = ({ user }) => {
 
 // ─── Main Component ────────────────────────────────────────────────────────────
 const DashboardHome = () => {
-    const { user } = useContext(AuthContext);
+    const { user, loading: authLoading, logOut } = useContext(AuthContext);
     const [dbUser, isUserLoading] = useUser();
+    const navigate = useNavigate();
 
     const userRole = dbUser?.role;
 
-    if (isUserLoading) {
+    const handleDashboardLogout = async () => {
+        await logOut();
+        localStorage.removeItem("access-token");
+        navigate("/login");
+    };
+
+    if (isUserLoading || authLoading) {
         return (
             <div className="space-y-6 animate-pulse">
                 <div className="h-40 bg-neutral-200 dark:bg-neutral-800 rounded-3xl" />
-                <div className="grid grid-cols-3 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                     {[1, 2, 3].map(i => <div key={i} className="h-32 bg-neutral-200 dark:bg-neutral-800 rounded-2xl" />)}
                 </div>
             </div>
         );
     }
 
+    if (!user) return <div className="text-center py-20 font-bold opacity-50">Please login to continue.</div>;
+
     if (userRole === 'admin') return <AdminDashboard user={user} />;
     if (userRole === 'buyer') return <BuyerDashboard user={user} dbUser={dbUser} />;
-    return <WorkerDashboard user={user} dbUser={dbUser} />;
+    if (userRole === 'worker') return <WorkerDashboard user={user} dbUser={dbUser} />;
+
+    return (
+        <div className="flex flex-col items-center justify-center py-20 animate-fade-in text-center">
+            <div className="text-5xl mb-4">⌛</div>
+            <h2 className="text-2xl font-black text-neutral-900 dark:text-white">Verifying Permissions...</h2>
+            <p className="text-neutral-500 mt-2 max-w-sm">We're confirming your access level. This can happen during a role update or if your session needs a refresh.</p>
+            <div className="flex gap-4 mt-8">
+                <Button onClick={() => window.location.reload()} variant="primary">Refresh Data</Button>
+                <Button onClick={handleDashboardLogout} variant="outline" className="text-red-500">Logout & Re-login</Button>
+            </div>
+        </div>
+    );
 };
 
 export default DashboardHome;

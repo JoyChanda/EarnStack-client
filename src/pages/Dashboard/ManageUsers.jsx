@@ -6,11 +6,16 @@ import { useState } from "react";
 const ManageUsers = () => {
     const [updating, setUpdating] = useState(null);
 
-    const { data: users, isLoading, refetch } = useQuery({
+    const { data: users, isLoading, error, refetch } = useQuery({
         queryKey: ['users'],
         queryFn: async () => {
-            const res = await axiosSecure.get('/users');
-            return res.data;
+            try {
+                const res = await axiosSecure.get('/users');
+                return res.data;
+            } catch (err) {
+                console.error("Fetch users error details:", err.response || err);
+                throw err;
+            }
         }
     });
 
@@ -56,6 +61,17 @@ const ManageUsers = () => {
                         ))}
                     </div>
                 </Card>
+            </div>
+        );
+    }
+
+    if (error) {
+        return (
+            <div className="text-center py-20">
+                <div className="text-5xl mb-4">❌</div>
+                <h3 className="text-xl font-bold text-red-500">Failed to load users</h3>
+                <p className="text-neutral-500 mt-2">{error.response?.data?.message || "Verify your admin permissions and try again."}</p>
+                <Button onClick={() => refetch()} className="mt-6">Try Again</Button>
             </div>
         );
     }
@@ -154,10 +170,14 @@ const ManageUsers = () => {
                     </table>
                     
                     {users?.length === 0 && (
-                        <div className="text-center py-20 bg-white dark:bg-neutral-900">
-                            <div className="text-5xl mb-4 opacity-20">👥</div>
-                            <h3 className="text-lg font-bold text-neutral-900 dark:text-white">No users found</h3>
-                            <p className="text-neutral-500 dark:text-neutral-400 text-sm mt-1">Users will appear here as they register.</p>
+                        <div className="text-center py-20 bg-white dark:bg-neutral-900 border-t border-neutral-100 dark:border-neutral-800">
+                            <div className="text-5xl mb-4 grayscale opacity-30">👥</div>
+                            <h3 className="text-lg font-bold text-neutral-900 dark:text-white">No Workers or Buyers found</h3>
+                            <p className="text-neutral-500 dark:text-neutral-400 text-sm mt-1 max-w-sm mx-auto">
+                                The list only shows platform participants (Admins are hidden here). 
+                                <br /> 
+                                <span className="font-bold text-primary-500">Pro Tip:</span> Login as a <span className="underline italic">Worker</span> or <span className="underline italic">Buyer</span> using the demo buttons to see them appear here.
+                            </p>
                         </div>
                     )}
                 </div>

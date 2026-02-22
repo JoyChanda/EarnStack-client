@@ -1,5 +1,5 @@
 import { useState, useContext } from "react";
-import { Link, NavLink, Outlet, useNavigate, Navigate } from "react-router-dom";
+import { Link, NavLink, Outlet, useNavigate, Navigate, useLocation } from "react-router-dom";
 import { AuthContext } from "../providers/AuthProvider";
 import { useTheme } from "../providers/ThemeProvider";
 import ThemeToggle from "../components/Shared/ThemeToggle";
@@ -13,12 +13,14 @@ const DashboardLayout = () => {
     const [isSidebarOpen, setIsSidebarOpen] = useState(true);
     const [isProfileOpen, setIsProfileOpen] = useState(false);
     const navigate = useNavigate();
+    const location = useLocation();
 
     const userRole = dbUser?.role;
 
     const handleLogout = async () => {
         try {
             await logOut();
+            localStorage.removeItem("access-token");
             navigate("/");
         } catch (error) {
             console.error(error);
@@ -45,20 +47,42 @@ const DashboardLayout = () => {
         { name: 'Purchase Coins', path: '/dashboard/payments', icon: '💰' }
     ];
 
-    const links = userRole === 'admin' ? adminLinks : userRole === 'buyer' ? buyerLinks : workerLinks;
+    const token = localStorage.getItem("access-token");
 
-    // Auth guard
-    if (loading) {
+    // Auth & Role loading guard
+    if (loading || (isUserLoading && !dbUser)) {
         return (
             <div className="min-h-screen flex items-center justify-center bg-neutral-50 dark:bg-neutral-950">
-                <div className="flex flex-col items-center gap-4">
-                    <div className="w-12 h-12 border-4 border-primary-500 border-t-transparent rounded-full animate-spin" />
-                    <p className="text-sm font-bold text-neutral-400 uppercase tracking-widest">Loading...</p>
+                <div className="flex flex-col items-center gap-6 max-w-xs text-center">
+                    <div className="relative">
+                        <div className="w-16 h-16 border-4 border-primary-500/20 border-t-primary-500 rounded-full animate-spin" />
+                        <div className="absolute inset-0 flex items-center justify-center">
+                            <div className="w-8 h-8 bg-primary-500/10 rounded-full animate-pulse" />
+                        </div>
+                    </div>
+                    <div className="space-y-2">
+                        <p className="text-sm font-black text-neutral-900 dark:text-white uppercase tracking-[0.2em] animate-pulse">Verifying Role</p>
+                        <p className="text-xs text-neutral-500 dark:text-neutral-400 font-medium">Please wait while we secure your session...</p>
+                    </div>
                 </div>
             </div>
         );
     }
-    if (!user) return <Navigate to="/login" replace />;
+
+    if (!user || !token || (!isUserLoading && !dbUser)) {
+        localStorage.removeItem("access-token");
+        return <Navigate to="/login" replace state={{ from: location }} />;
+    }
+
+    // STRICT Role-based links
+    const getLinks = () => {
+        if (userRole === 'admin') return adminLinks;
+        if (userRole === 'buyer') return buyerLinks;
+        if (userRole === 'worker') return workerLinks;
+        return [];
+    };
+
+    const links = getLinks();
 
     return (
         <div className="flex min-h-screen bg-neutral-50 dark:bg-neutral-950 transition-colors duration-300">
@@ -127,13 +151,15 @@ const DashboardLayout = () => {
                         <NotificationDropdown />
                         <ThemeToggle />
                         
-                        <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary-50 dark:bg-primary-900/20 text-primary-600 dark:text-primary-400 font-black text-sm">
-                            {isUserLoading ? (
-                                <div className="w-8 h-4 bg-neutral-200 dark:bg-neutral-800 animate-pulse rounded" />
-                            ) : (
-                                <>🪙 {dbUser?.coin || 0}</>
-                            )}
-                        </div>
+                        {userRole !== 'admin' && (
+                            <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary-50 dark:bg-primary-900/20 text-primary-600 dark:text-primary-400 font-black text-sm">
+                                {isUserLoading ? (
+                                    <div className="w-8 h-4 bg-neutral-200 dark:bg-neutral-800 animate-pulse rounded" />
+                                ) : (
+                                    <>🪙 {dbUser?.coin || 0}</>
+                                )}
+                            </div>
+                        )}
 
                         {/* Profile Dropdown */}
                         <div className="relative">

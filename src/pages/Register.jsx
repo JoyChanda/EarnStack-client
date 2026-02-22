@@ -19,7 +19,7 @@ const Register = () => {
         email: '',
         photo: '',
         password: '',
-        role: 'Worker'
+        role: 'worker'
     });
 
     const [imageUploading, setImageUploading] = useState(false);
@@ -67,23 +67,18 @@ const Register = () => {
         // Validate all fields
         const newErrors = {};
         
-        // Name validation
         const nameError = validateRequired(formData.name, 'Full name');
         if (nameError) newErrors.name = nameError;
         
-        // Email validation
         const emailError = validateEmail(formData.email);
         if (emailError) newErrors.email = emailError;
         
-        // Photo URL validation
-        const photoError = validateURL(formData.photo);
+        const photoError = validateRequired(formData.photo, 'Profile Picture');
         if (photoError) newErrors.photo = photoError;
         
-        // Password validation
         const passwordError = validatePassword(formData.password);
         if (passwordError) newErrors.password = passwordError;
 
-        // If there are errors, show them and stop
         if (Object.keys(newErrors).length > 0) {
             setErrors(newErrors);
             return;
@@ -96,25 +91,22 @@ const Register = () => {
             // 1. Create User in Firebase
             const result = await createUser(formData.email, formData.password);
             const user = result.user;
-            console.log("User created:", user);
 
             // 2. Update Profile (Name & Photo)
             await updateUserProfile(formData.name, formData.photo);
 
             // 3. Save User & Role to Database (MongoDB)
-            const normalizedRole = formData.role === "TaskCreator" ? "buyer" : "worker";
             const userInfo = {
                 name: formData.name,
                 email: formData.email,
                 image: formData.photo,
-                role: normalizedRole,
+                role: formData.role,
             };
             
-            // Note: We use the base API URL directly or an axios call here
             await axios.post(`${import.meta.env.VITE_API_URL}/users`, userInfo);
 
             // 4. Get JWT with correct role
-            await getToken({ email: formData.email, role: normalizedRole });
+            await getToken({ email: formData.email, role: formData.role });
             
             setLoading(false);
             navigate("/dashboard"); 
@@ -126,147 +118,165 @@ const Register = () => {
     };
 
     return (
-        <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary-900 via-secondary-900 to-primary-800 text-white container-padding py-12">
-            <div className="w-full max-w-md card-glass">
-                {/* Header */}
-                <div className="text-center mb-8">
-                    <h2 className="text-gradient text-3xl font-bold mb-2">
-                        Join EarnStack
-                    </h2>
-                    <p className="text-neutral-300">Start your journey to earn and grow</p>
-                </div>
+        <div className="min-h-screen flex items-center justify-center container-padding py-20 bg-neutral-50 dark:bg-neutral-950 transition-colors duration-500">
+            {/* 🎭 BACKGROUND EFFECTS */}
+            <div className="absolute inset-0 overflow-hidden pointer-events-none">
+                <div className="absolute top-[-5%] right-[-5%] w-[45%] h-[45%] bg-primary-500/10 blur-[120px] rounded-full animate-pulse-slow" />
+                <div className="absolute bottom-[-5%] left-[-5%] w-[45%] h-[45%] bg-secondary-500/10 blur-[120px] rounded-full animate-pulse-slow" style={{ animationDelay: '1s' }} />
+            </div>
 
-                {/* Form */}
-                <form onSubmit={handleRegister} className="space-y-6">
-                    {/* Name Input */}
-                    <Input
-                        label="Full Name"
-                        type="text"
-                        name="name"
-                        placeholder="John Doe"
-                        value={formData.name}
-                        onChange={handleChange}
-                        error={errors.name}
-                        required
-                        className="bg-white/5"
-                    />
-
-                    {/* Email Input */}
-                    <Input
-                        label="Email Address"
-                        type="email"
-                        name="email"
-                        placeholder="john@example.com"
-                        value={formData.email}
-                        onChange={handleChange}
-                        error={errors.email}
-                        required
-                        className="bg-white/5"
-                    />
-
-                    {/* Photo Upload (imgBB) */}
-                    <div className="space-y-2">
-                        <label className="label-base text-neutral-300">
-                            Profile Picture <span className="text-red-400">*</span>
-                        </label>
-                        <div className={`relative border-2 border-dashed rounded-2xl p-4 text-center transition-all bg-white/5 ${
-                            uploadedImageUrl ? 'border-primary-500/50 bg-primary-500/5' : 'border-white/10 hover:border-white/20'
-                        }`}>
-                            <input
-                                type="file"
-                                accept="image/*"
-                                onChange={handleImageUpload}
-                                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                                disabled={imageUploading}
-                            />
-                            {imageUploading ? (
-                                <div className="flex flex-col items-center gap-2 py-2">
-                                    <div className="w-6 h-6 border-2 border-primary-400 border-t-transparent rounded-full animate-spin" />
-                                    <p className="text-[10px] font-bold text-primary-400">Uploading...</p>
-                                </div>
-                            ) : uploadedImageUrl ? (
-                                <div className="flex items-center gap-4 text-left">
-                                    <img src={uploadedImageUrl} alt="Preview" className="w-12 h-12 rounded-xl object-cover ring-2 ring-primary-500/30" />
-                                    <div>
-                                        <p className="text-xs font-bold text-primary-400">Success!</p>
-                                        <p className="text-[10px] text-neutral-400">Click to change</p>
-                                    </div>
-                                </div>
-                            ) : (
-                                <div className="py-2">
-                                    <p className="text-sm font-bold text-neutral-300">Choose Profile Image</p>
-                                    <p className="text-[10px] text-neutral-500 mt-0.5">JPG, PNG or WebP</p>
-                                </div>
-                            )}
-                        </div>
-                        {errors.photo && <p className="text-[10px] text-red-400 font-bold mt-1">{errors.photo}</p>}
+            <div className="relative z-10 w-full max-w-xl">
+                <Card variant="glass" className="p-8 md:p-12 shadow-[0_32px_64px_-16px_rgba(0,0,0,0.1)] dark:shadow-[0_32px_64px_-16px_rgba(0,0,0,0.3)] border-white/20 dark:border-neutral-800/50 backdrop-blur-2xl rounded-[2.5rem] group">
+                    <div className="text-center mb-10">
+                        <Link to="/" className="inline-flex items-center gap-3 mb-6 group/logo">
+                            <div className="w-12 h-12 bg-gradient-to-br from-primary-600 to-secondary-600 rounded-2xl flex items-center justify-center text-white shadow-xl group-hover/logo:scale-110 transition-all duration-500">
+                                <span className="text-2xl font-black">E</span>
+                            </div>
+                            <span className="text-3xl font-black tracking-tight text-neutral-900 dark:text-white">EarnStack</span>
+                        </Link>
+                        <h1 className="text-3xl font-black text-neutral-900 dark:text-white mb-2">Create Account</h1>
+                        <p className="text-neutral-500 dark:text-neutral-400 text-sm font-medium">Join thousands of others earning on EarnStack</p>
                     </div>
 
-                    {/* Password Input */}
-                    <Input
-                        label="Password"
-                        type="password"
-                        name="password"
-                        placeholder="••••••••"
-                        value={formData.password}
-                        onChange={handleChange}
-                        error={errors.password}
-                        required
-                        className="bg-white/5"
-                    />
+                    <form onSubmit={handleRegister} className="space-y-6">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div className="space-y-1">
+                                <label className="text-xs font-black uppercase tracking-widest text-neutral-500 dark:text-neutral-400 ml-1">Full Name</label>
+                                <Input
+                                    type="text"
+                                    name="name"
+                                    placeholder="John Doe"
+                                    value={formData.name}
+                                    onChange={handleChange}
+                                    error={errors.name}
+                                    required
+                                    className="py-4 px-5 rounded-2xl bg-neutral-100/50 dark:bg-neutral-800/50 border-none focus:ring-2 focus:ring-primary-500/50"
+                                />
+                            </div>
 
-                    {/* Role Select */}
-                    <div>
-                        <label className="label-base text-neutral-300">
-                            Select Role <span className="text-red-400">*</span>
-                        </label>
-                        <div className="relative">
-                            <select
-                                name="role"
-                                value={formData.role}
-                                onChange={handleChange}
-                                className="input-base bg-white/5 appearance-none cursor-pointer"
-                                required
-                            >
-                                <option value="Worker">Worker</option>
-                                <option value="TaskCreator">Buyer</option>
-                            </select>
-                            <div className="absolute inset-y-0 right-0 flex items-center px-4 pointer-events-none text-neutral-400">
-                                <svg className="w-4 h-4 fill-current" viewBox="0 0 20 20">
-                                    <path d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" />
-                                </svg>
+                            <div className="space-y-1">
+                                <label className="text-xs font-black uppercase tracking-widest text-neutral-500 dark:text-neutral-400 ml-1">Email Address</label>
+                                <Input
+                                    type="email"
+                                    name="email"
+                                    placeholder="john@example.com"
+                                    value={formData.email}
+                                    onChange={handleChange}
+                                    error={errors.email}
+                                    required
+                                    className="py-4 px-5 rounded-2xl bg-neutral-100/50 dark:bg-neutral-800/50 border-none focus:ring-2 focus:ring-primary-500/50"
+                                />
                             </div>
                         </div>
-                    </div>
 
-                    {/* General Error Message */}
-                    {errors.general && (
-                        <div className="error-message bg-red-900/20 p-3 rounded-lg border border-red-500/50">
-                            {errors.general}
+                        <div className="space-y-2">
+                            <label className="text-xs font-black uppercase tracking-widest text-neutral-500 dark:text-neutral-400 ml-1">Profile Picture</label>
+                            <div className={`relative border-2 border-dashed rounded-2xl p-6 text-center transition-all ${
+                                uploadedImageUrl 
+                                    ? 'border-primary-500/50 bg-primary-500/5' 
+                                    : 'border-neutral-200 dark:border-neutral-800 bg-neutral-100/30 dark:bg-neutral-800/30 hover:border-primary-500/30'
+                            }`}>
+                                <input
+                                    type="file"
+                                    accept="image/*"
+                                    onChange={handleImageUpload}
+                                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+                                    disabled={imageUploading}
+                                />
+                                {imageUploading ? (
+                                    <div className="flex flex-col items-center gap-3 py-2">
+                                        <div className="w-8 h-8 border-4 border-primary-500/20 border-t-primary-500 rounded-full animate-spin" />
+                                        <p className="text-xs font-black text-primary-500 uppercase tracking-widest">Uploading...</p>
+                                    </div>
+                                ) : uploadedImageUrl ? (
+                                    <div className="flex items-center gap-6 text-left">
+                                        <div className="relative">
+                                            <img src={uploadedImageUrl} alt="Preview" className="w-16 h-16 rounded-2xl object-cover ring-4 ring-primary-500/20 shadow-lg" />
+                                            <div className="absolute -top-2 -right-2 w-6 h-6 bg-primary-500 text-white rounded-full flex items-center justify-center text-[10px] shadow-lg">✓</div>
+                                        </div>
+                                        <div>
+                                            <p className="text-sm font-black text-neutral-900 dark:text-white">Profile Image Set</p>
+                                            <p className="text-xs text-neutral-500 font-medium">Click to change your picture</p>
+                                        </div>
+                                    </div>
+                                ) : (
+                                    <div className="py-2 space-y-2">
+                                        <div className="w-12 h-12 bg-neutral-200 dark:bg-neutral-800 rounded-2xl flex items-center justify-center mx-auto mb-3">
+                                            <span className="text-2xl">📸</span>
+                                        </div>
+                                        <p className="text-sm font-black text-neutral-700 dark:text-neutral-300">Choose Profile Image</p>
+                                        <p className="text-[10px] text-neutral-500 font-bold uppercase tracking-widest">JPG, PNG or WebP</p>
+                                    </div>
+                                )}
+                            </div>
+                            {errors.photo && <p className="text-xs text-red-500 font-bold ml-1">⚠️ {errors.photo}</p>}
                         </div>
-                    )}
 
-                    {/* Submit Button */}
-                    <Button
-                        type="submit"
-                        variant="primary"
-                        fullWidth
-                        loading={loading}
-                    >
-                        {loading ? 'Creating Account...' : 'Sign Up'}
-                    </Button>
-                </form>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div className="space-y-1">
+                                <label className="text-xs font-black uppercase tracking-widest text-neutral-500 dark:text-neutral-400 ml-1">Password</label>
+                                <Input
+                                    type="password"
+                                    name="password"
+                                    placeholder="••••••••"
+                                    value={formData.password}
+                                    onChange={handleChange}
+                                    error={errors.password}
+                                    required
+                                    className="py-4 px-5 rounded-2xl bg-neutral-100/50 dark:bg-neutral-800/50 border-none focus:ring-2 focus:ring-primary-500/50"
+                                />
+                            </div>
 
-                {/* Footer */}
-                <div className="mt-8 text-center text-neutral-400 text-sm">
-                    Already have an account?{' '}
-                    <Link 
-                        to="/login" 
-                        className="text-primary-400 hover:text-primary-300 font-medium transition-colors"
-                    >
-                        Log in
-                    </Link>
-                </div>
+                            <div className="space-y-1">
+                                <label className="text-xs font-black uppercase tracking-widest text-neutral-500 dark:text-neutral-400 ml-1">Account Role</label>
+                                <div className="relative group/select">
+                                    <select
+                                        name="role"
+                                        value={formData.role}
+                                        onChange={handleChange}
+                                        className="w-full py-4 px-5 rounded-2xl bg-neutral-100/50 dark:bg-neutral-800/50 border-none focus:ring-2 focus:ring-primary-500/50 appearance-none cursor-pointer font-bold text-neutral-700 dark:text-neutral-300 transition-all"
+                                        required
+                                    >
+                                        <option value="worker">Worker (Earn Coins)</option>
+                                        <option value="buyer">Buyer (Post Tasks)</option>
+                                    </select>
+                                    <div className="absolute inset-y-0 right-0 flex items-center px-4 pointer-events-none text-neutral-400 group-hover/select:text-primary-500 transition-colors">
+                                        <svg className="w-5 h-5 fill-current" viewBox="0 0 20 20">
+                                            <path d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" />
+                                        </svg>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        {errors.general && (
+                            <div className="p-4 rounded-2xl bg-red-50 dark:bg-red-900/20 border border-red-100 dark:border-red-900/30 text-red-600 dark:text-red-400 text-sm font-bold flex items-center gap-3 animate-fade-in">
+                                <span className="text-lg">⚠️</span>
+                                {errors.general}
+                            </div>
+                        )}
+
+                        <Button
+                            type="submit"
+                            className="w-full py-5 rounded-2xl font-black text-lg shadow-xl shadow-primary-500/20 hover:shadow-primary-500/40 transition-all duration-300 mt-4"
+                            loading={loading}
+                        >
+                            Create Free Account
+                        </Button>
+                    </form>
+
+                    <div className="mt-10 text-center">
+                        <p className="text-sm text-neutral-500 dark:text-neutral-400 font-medium">
+                            Already have an account?{' '}
+                            <Link 
+                                to="/login" 
+                                className="font-black text-primary-500 hover:text-primary-600 transition-colors underline underline-offset-4 decoration-primary-500/30"
+                            >
+                                Sign In
+                            </Link>
+                        </p>
+                    </div>
+                </Card>
             </div>
         </div>
     );
