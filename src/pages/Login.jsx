@@ -66,7 +66,8 @@ const Login = () => {
             
             // Step 1: Sync with DB (Ensures user exists and role is assigned)
             try {
-                await axios.post(`${import.meta.env.VITE_API_URL}/users`, {
+                const apiUrl = import.meta.env.VITE_API_URL?.replace(/\/$/, "");
+                await axios.post(`${apiUrl}/users`, {
                     name: fbUser.displayName,
                     email: fbUser.email,
                     image: fbUser.photoURL,
@@ -121,7 +122,8 @@ const Login = () => {
             }
 
             // Step 2: Critical Sync with DB for role accuracy
-            await axios.post(`${import.meta.env.VITE_API_URL}/users`, {
+            const apiUrl = import.meta.env.VITE_API_URL?.replace(/\/$/, "");
+            await axios.post(`${apiUrl}/users`, {
                 name: fbUser.displayName || creds.name,
                 email: creds.email,
                 image: fbUser.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(creds.name)}&background=8b5cf6&color=fff`,

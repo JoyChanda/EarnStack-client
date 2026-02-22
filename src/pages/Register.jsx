@@ -103,7 +103,8 @@ const Register = () => {
                 role: formData.role,
             };
             
-            await axios.post(`${import.meta.env.VITE_API_URL}/users`, userInfo);
+            const apiUrl = import.meta.env.VITE_API_URL?.replace(/\/$/, "");
+            await axios.post(`${apiUrl}/users`, userInfo);
 
             // 4. Get JWT with correct role
             await getToken({ email: formData.email, role: formData.role });
