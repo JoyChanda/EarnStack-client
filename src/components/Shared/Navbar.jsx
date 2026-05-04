@@ -37,13 +37,17 @@ const Navbar = () => {
         }
     };
 
+    const navTextClass = isTransparentDarkBg
+        ? 'text-white/80 hover:text-white'
+        : 'text-neutral-600 dark:text-neutral-400';
+
     const navLinks = (
         <>
-            <NavLink to="/" className={({ isActive }) => `font-black text-xs uppercase tracking-widest transition-all hover:text-primary-500 hover:scale-105 ${isActive ? 'text-primary-500' : (isTransparentDarkBg ? 'text-neutral-300 hover:text-white' : 'text-neutral-600 dark:text-neutral-400')}`}>Home</NavLink>
+            <NavLink to="/" className={({ isActive }) => `font-black text-xs uppercase tracking-widest transition-all hover:text-primary-500 hover:scale-105 ${isActive ? 'text-primary-500' : navTextClass}`}>Home</NavLink>
             {user && (
-                <NavLink to="/dashboard" className={({ isActive }) => `font-black text-xs uppercase tracking-widest transition-all hover:text-primary-500 hover:scale-105 ${isActive ? 'text-primary-500' : (isTransparentDarkBg ? 'text-neutral-300 hover:text-white' : 'text-neutral-600 dark:text-neutral-400')}`}>Dashboard</NavLink>
+                <NavLink to="/dashboard" className={({ isActive }) => `font-black text-xs uppercase tracking-widest transition-all hover:text-primary-500 hover:scale-105 ${isActive ? 'text-primary-500' : navTextClass}`}>Dashboard</NavLink>
             )}
-            <a href="https://github.com" target="_blank" rel="noopener noreferrer" className={`font-black text-xs uppercase tracking-widest transition-all hover:text-primary-500 hover:scale-105 flex items-center gap-1 ${isTransparentDarkBg ? 'text-neutral-300 hover:text-white' : 'text-neutral-600 dark:text-neutral-400'}`}>
+            <a href="https://github.com" target="_blank" rel="noopener noreferrer" className={`font-black text-xs uppercase tracking-widest transition-all hover:text-primary-500 hover:scale-105 flex items-center gap-1 ${navTextClass}`}>
                 Developer Area
             </a>
         </>
@@ -62,7 +66,7 @@ const Navbar = () => {
                         <span className="text-2xl font-black">E</span>
                     </div>
                     <div className="flex flex-col leading-none">
-                        <span className={`text-xl font-black tracking-tighter ${isTransparentDarkBg ? 'text-white' : 'text-neutral-900 dark:text-white'}`}>
+                        <span style={{ color: isTransparentDarkBg ? '#ffffff' : undefined }} className="text-xl font-black tracking-tighter text-neutral-900 dark:text-white">
                             Earn<span className="text-primary-500">Stack</span>
                         </span>
                         <span className="text-[8px] font-black uppercase tracking-[0.3em] text-neutral-400 mt-0.5">Micro-Tasks</span>
