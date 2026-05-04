@@ -1,5 +1,5 @@
 import { useContext, useState, useEffect } from "react";
-import { Link, NavLink, useNavigate } from "react-router-dom";
+import { Link, NavLink, useNavigate, useLocation } from "react-router-dom";
 import { AuthContext } from "../../providers/AuthProvider";
 import { useTheme } from "../../providers/ThemeProvider";
 import ThemeToggle from "./ThemeToggle";
@@ -13,6 +13,10 @@ const Navbar = () => {
     const [isMenuOpen, setIsMenuOpen] = useState(false);
     const [isProfileOpen, setIsProfileOpen] = useState(false);
     const navigate = useNavigate();
+    const location = useLocation();
+
+    // Determine if we are at the top of the home page (which has a dark hero section)
+    const isTransparentDarkBg = location.pathname === '/' && !isScrolled;
 
     useEffect(() => {
         const handleScroll = () => {
@@ -35,11 +39,11 @@ const Navbar = () => {
 
     const navLinks = (
         <>
-            <NavLink to="/" className={({ isActive }) => `font-black text-xs uppercase tracking-widest transition-all hover:text-primary-500 hover:scale-105 ${isActive ? 'text-primary-500' : 'text-neutral-600 dark:text-neutral-400'}`}>Home</NavLink>
+            <NavLink to="/" className={({ isActive }) => `font-black text-xs uppercase tracking-widest transition-all hover:text-primary-500 hover:scale-105 ${isActive ? 'text-primary-500' : (isTransparentDarkBg ? 'text-neutral-300 hover:text-white' : 'text-neutral-600 dark:text-neutral-400')}`}>Home</NavLink>
             {user && (
-                <NavLink to="/dashboard" className={({ isActive }) => `font-black text-xs uppercase tracking-widest transition-all hover:text-primary-500 hover:scale-105 ${isActive ? 'text-primary-500' : 'text-neutral-600 dark:text-neutral-400'}`}>Dashboard</NavLink>
+                <NavLink to="/dashboard" className={({ isActive }) => `font-black text-xs uppercase tracking-widest transition-all hover:text-primary-500 hover:scale-105 ${isActive ? 'text-primary-500' : (isTransparentDarkBg ? 'text-neutral-300 hover:text-white' : 'text-neutral-600 dark:text-neutral-400')}`}>Dashboard</NavLink>
             )}
-            <a href="https://github.com" target="_blank" rel="noopener noreferrer" className="font-black text-xs uppercase tracking-widest text-neutral-600 dark:text-neutral-400 transition-all hover:text-primary-500 hover:scale-105 flex items-center gap-1">
+            <a href="https://github.com" target="_blank" rel="noopener noreferrer" className={`font-black text-xs uppercase tracking-widest transition-all hover:text-primary-500 hover:scale-105 flex items-center gap-1 ${isTransparentDarkBg ? 'text-neutral-300 hover:text-white' : 'text-neutral-600 dark:text-neutral-400'}`}>
                 Developer Area
             </a>
         </>
@@ -58,7 +62,7 @@ const Navbar = () => {
                         <span className="text-2xl font-black">E</span>
                     </div>
                     <div className="flex flex-col leading-none">
-                        <span className="text-xl font-black text-neutral-900 dark:text-white tracking-tighter">
+                        <span className={`text-xl font-black tracking-tighter ${isTransparentDarkBg ? 'text-white' : 'text-neutral-900 dark:text-white'}`}>
                             Earn<span className="text-primary-500">Stack</span>
                         </span>
                         <span className="text-[8px] font-black uppercase tracking-[0.3em] text-neutral-400 mt-0.5">Micro-Tasks</span>
@@ -139,7 +143,7 @@ const Navbar = () => {
                     ) : (
                         <div className="flex items-center gap-2">
                             <Link to="/login">
-                                <button className="hidden xs:flex px-5 py-2.5 text-xs font-black uppercase tracking-widest text-neutral-800 dark:text-neutral-200 hover:text-primary-600 dark:hover:text-primary-400 transition-all rounded-2xl hover:bg-neutral-100 dark:hover:bg-neutral-800">
+                                <button className={`hidden xs:flex px-5 py-2.5 text-xs font-black uppercase tracking-widest transition-all rounded-2xl hover:bg-neutral-100 dark:hover:bg-neutral-800 ${isTransparentDarkBg ? 'text-white hover:text-primary-400' : 'text-neutral-800 dark:text-neutral-200 hover:text-primary-600 dark:hover:text-primary-400'}`}>
                                     Login
                                 </button>
                             </Link>
@@ -154,7 +158,7 @@ const Navbar = () => {
                     {/* 📱 MOBILE TOGGLE */}
                     <button 
                         onClick={() => setIsMenuOpen(!isMenuOpen)}
-                        className="md:hidden p-2.5 text-neutral-700 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-neutral-800 rounded-2xl transition-all active:scale-95 overflow-hidden"
+                        className={`md:hidden p-2.5 rounded-2xl transition-all active:scale-95 overflow-hidden ${isTransparentDarkBg ? 'text-white hover:bg-white/10' : 'text-neutral-700 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-neutral-800'}`}
                     >
                         <div className="w-6 h-6 flex flex-col justify-center items-center gap-1.5 relative">
                             <span className={`w-6 h-0.5 bg-current transition-all duration-300 ${isMenuOpen ? 'rotate-45 translate-y-1' : ''}`} />
